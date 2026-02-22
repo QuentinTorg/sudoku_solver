@@ -1,7 +1,7 @@
 import unittest
 
 from sudoku_solver.solver import solve_from_string
-from sudoku_solver.types import SolveStatus
+from sudoku_solver.types import SolveStatus, TechniqueName
 
 
 class SolverTests(unittest.TestCase):
@@ -12,11 +12,15 @@ class SolverTests(unittest.TestCase):
         self.assertEqual(result.grid_string, solved)
         self.assertEqual(result.steps, [])
 
-    def test_solve_from_string_marks_stalled_when_no_v1_move_exists(self) -> None:
-        hard = ".....6....59.....82....8....45........3........6..3.54...325..6.................."
-        result = solve_from_string(hard)
+    def test_solve_from_string_returns_first_available_step_when_unsolved(self) -> None:
+        almost_solved = (
+            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
+        )
+        result = solve_from_string(almost_solved)
         self.assertEqual(result.status, SolveStatus.STALLED)
-        self.assertTrue(result.steps)
+        self.assertEqual(len(result.steps), 1)
+        self.assertEqual(result.steps[0].technique, TechniqueName.NAKED_SINGLE)
+        self.assertEqual(result.steps[0].placements, [(80, 9)])
 
 
 if __name__ == "__main__":

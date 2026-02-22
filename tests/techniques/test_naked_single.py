@@ -14,6 +14,10 @@ class NakedSingleTechniqueTests(unittest.TestCase):
 
         self.assertIsNotNone(step)
         self.assertEqual(step.technique, TechniqueName.NAKED_SINGLE)
+        assert step is not None
+        self.assertEqual(step.placements, [(80, 9)])
+        self.assertEqual(step.eliminations, [])
+        self.assertEqual(step.affected_units, ["r9c9"])
 
 
 if __name__ == "__main__":

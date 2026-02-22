@@ -14,6 +14,10 @@ class HiddenSingleTechniqueTests(unittest.TestCase):
 
         self.assertIsNotNone(step)
         self.assertEqual(step.technique, TechniqueName.HIDDEN_SINGLE)
+        assert step is not None
+        self.assertEqual(step.placements, [(2, 3)])
+        self.assertEqual(step.eliminations, [])
+        self.assertEqual(step.affected_units, ["row1", "r1c3"])
 
 
 if __name__ == "__main__":
