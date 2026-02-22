@@ -82,6 +82,8 @@ print(len(result.steps))
 python -m sudoku_solver "<81-char-puzzle>"
 python -m sudoku_solver "<81-char-puzzle>" --show-steps
 python -m sudoku_solver "<81-char-puzzle>" --max-steps 200
+python -m sudoku_solver --puzzle-file top1465.txt
+python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 2 --show-steps
 ```
 
 ## Input Format
