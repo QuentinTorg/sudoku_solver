@@ -212,9 +212,6 @@ def _resolve_techniques(
         apply_xyz_wing,
         apply_x_wing,
         apply_w_wing,
-        apply_two_string_kite,
-        apply_skyscraper,
-        apply_unique_rectangle,
     )
 
     if techniques is None:

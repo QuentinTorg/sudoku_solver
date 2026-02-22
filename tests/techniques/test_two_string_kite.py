@@ -10,8 +10,9 @@ class TwoStringKiteTechniqueTests(unittest.TestCase):
         candidates = {
             10: {1, 5},
             16: {2, 5},
-            61: {3, 5},
-            55: {5, 9},
+            2: {3, 5},
+            56: {4, 5},
+            61: {5, 9},
         }
 
         step = apply_two_string_kite(grid, candidates)
@@ -20,15 +21,16 @@ class TwoStringKiteTechniqueTests(unittest.TestCase):
         assert step is not None
         self.assertEqual(step.technique.value, "two_string_kite")
         self.assertEqual(step.placements, [])
-        self.assertEqual(step.eliminations, [(55, 5)])
+        self.assertEqual(step.eliminations, [(61, 5)])
 
     def test_apply_two_string_kite_returns_none_when_pattern_absent(self) -> None:
         grid = parse_grid("." * 81)
         candidates = {
             10: {1, 5},
             16: {2, 5},
-            62: {3, 5},  # shifted column endpoint breaks chain
-            55: {5, 9},
+            3: {3, 5},  # shifted endpoint is not in matching box
+            56: {4, 5},
+            61: {5, 9},
         }
 
         step = apply_two_string_kite(grid, candidates)
