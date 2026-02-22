@@ -1,57 +1,203 @@
 # sudoku_solver
 
-Human-technique-first Sudoku solver in Python, designed to be explainable, deterministic, and fully unit tested.
+Explainable Sudoku solver in Python with human-style techniques, step-by-step reasoning, CLI and library APIs, benchmarking tools, and CI quality gates.
 
-## Goals
+## What This Project Does
 
-- Solve Sudoku puzzles using human-style techniques (not brute-force in v1)
-- Produce structured, machine-testable explanations for each solving step
-- Provide both a reusable Python library and a CLI
-- Maintain **100% unit test coverage**
+- Solves 9x9 Sudoku puzzles from a single puzzle string or a puzzle file.
+- Applies a deterministic sequence of human-style techniques and records each applied step.
+- Falls back to a bounded uniqueness search when technique progress stops.
+- Reports structured outcomes (`solved`, `stalled`, `invalid`), difficulty rating, and optional telemetry.
+- Includes unit tests, property tests (when `hypothesis` is installed), linting, typing checks, and coverage reporting.
 
-## Current v1 Scope
+## Feature Summary
 
-The solver applies techniques in this fixed priority order:
+- Techniques implemented:
+  1. Naked Single
+  2. Hidden Single
+  3. Locked Candidates (pointing/claiming)
+  4. Naked Pair
+  5. Hidden Pair
+  6. Naked Triple
+  7. Hidden Triple
+  8. XYZ-Wing
+- Fallback search:
+  Uniqueness-aware backtracking is used only when no configured technique can advance the grid.
+- Result metadata:
+  `steps`, `technique_counts`, and `difficulty` are returned for every solve attempt.
 
-1. Naked Single
-2. Hidden Single
-3. Locked Candidates (pointing/claiming)
-4. Naked Pair
-5. Hidden Pair
+## Sudoku Terms (Quick Glossary)
 
-If none of the enabled techniques can make progress, the solver returns `stalled`.
+- `Cell`: one square in the 9x9 grid.
+- `Row`: horizontal set of 9 cells.
+- `Column`: vertical set of 9 cells.
+- `Box`: one 3x3 subgrid.
+- `Unit`: any row, column, or box.
+- `Candidate`: a digit that is still legal for an empty cell.
+- `Peer`: a cell sharing a row, column, or box with another cell.
+- `Placement`: writing a final digit into a cell.
+- `Elimination`: removing a candidate from a cell.
 
-### Technique guide (v1)
+## Technique Guide
 
-1. Naked Single
-   A cell has exactly one remaining candidate.
-   Use when: candidate pruning leaves a cell with one possible digit.
-   Action: place that digit in the cell.
-   Why early: it is the most direct forced move and often unlocks many follow-up constraints.
+Technique order is fixed by default and affects which step is chosen first.
 
-2. Hidden Single
-   A digit appears as a candidate in only one cell inside a unit (row/column/box).
-   Use when: scanning a unit shows a digit can go in exactly one position.
-   Action: place that digit in that lone cell.
-   Why after naked singles: still a forced placement, but requires unit-level counting.
+### 1. Naked Single
+Definition:
+A cell has exactly one remaining candidate, so that digit must be placed.
 
-3. Locked Candidates (pointing/claiming)
-   Candidate positions for a digit are locked to one row/column within a box, or one box within a row/column.
-   Use when: all candidates for a digit in a unit align on an intersecting unit.
-   Action: eliminate that digit from peers on the intersecting unit outside the locked segment.
-   Why here: no placement is required, but it creates strong eliminations for later singles/pairs.
+Minimal scenario:
 
-4. Naked Pair
-   Two cells in a unit share the same two candidates (and only those two).
-   Use when: a unit contains exactly two cells with an identical candidate pair.
-   Action: remove those two digits from candidates of other cells in that unit.
-   Why later: requires pair-pattern matching and candidate bookkeeping.
+| Cell | Candidates |
+| --- | --- |
+| r4c5 | `{7}` |
 
-5. Hidden Pair
-   Two digits in a unit appear only in the same two cells, even if those cells have extra candidates.
-   Use when: frequency counting in a unit shows two digits restricted to the same two positions.
-   Action: keep only those two digits in those two cells; remove other candidates from those cells.
-   Why last in v1: similar value to naked pair but usually requires more expensive scanning.
+Action:
+Place `7` at `r4c5`.
+
+### 2. Hidden Single
+Definition:
+In one unit, a digit appears as a candidate in exactly one cell.
+
+Minimal scenario (row 2):
+
+| Cell | Candidates |
+| --- | --- |
+| r2c1 | `{1,4}` |
+| r2c3 | `{2,4}` |
+| r2c7 | `{3,4}` |
+
+Observation:
+Digit `1` appears only in `r2c1` in this row.
+
+Action:
+Place `1` at `r2c1`.
+
+### 3. Locked Candidates (Pointing/Claiming)
+Definition:
+A digit's candidates are confined to an intersection of units, allowing eliminations in the overlapping unit.
+
+Minimal scenario (pointing from box to row):
+
+| Box 1 cell | Has candidate 5? |
+| --- | --- |
+| r1c1 | yes |
+| r1c2 | yes |
+| r2c1 | no |
+| r2c2 | no |
+| r3c1 | no |
+| r3c2 | no |
+
+Observation:
+In box 1, candidate `5` appears only on row 1.
+
+| Row 1 outside box 1 | Has candidate 5? |
+| --- | --- |
+| r1c4 | yes |
+| r1c8 | yes |
+
+Action:
+Eliminate `5` from `r1c4` and `r1c8`.
+
+### 4. Naked Pair
+Definition:
+Two cells in the same unit contain the same two candidates and no others.
+
+Minimal scenario (row 5):
+
+| Cell | Candidates |
+| --- | --- |
+| r5c2 | `{2,8}` |
+| r5c7 | `{2,8}` |
+| r5c4 | `{1,2,9}` |
+| r5c9 | `{3,8}` |
+
+Action:
+Eliminate `2` from `r5c4` and eliminate `8` from `r5c9`.
+
+### 5. Hidden Pair
+Definition:
+Two digits in a unit can appear only in the same two cells, so those two cells must contain those two digits.
+
+Minimal scenario (row 6):
+
+| Cell | Candidates |
+| --- | --- |
+| r6c2 | `{1,3,7}` |
+| r6c9 | `{3,6,7}` |
+| other row-6 cells | no `3` and no `7` |
+
+Observation:
+Digits `3` and `7` are restricted to `r6c2` and `r6c9`.
+
+Action:
+Reduce `r6c2` and `r6c9` to `{3,7}`.
+
+### 6. Naked Triple
+Definition:
+Three cells in one unit contain candidates that together are exactly three digits.
+
+Minimal scenario (column 4):
+
+| Cell | Candidates |
+| --- | --- |
+| r1c4 | `{1,4}` |
+| r6c4 | `{1,9}` |
+| r8c4 | `{4,9}` |
+| r3c4 | `{2,4,9}` |
+
+Observation:
+The triple cells must take digits `1`, `4`, and `9` in some order.
+
+Action:
+Eliminate `4` and `9` from `r3c4`.
+
+### 7. Hidden Triple
+Definition:
+Three digits in a unit appear only in the same three cells (even if those cells have extra candidates).
+
+Minimal scenario (box 5):
+
+| Cell | Candidates |
+| --- | --- |
+| r4c4 | `{1,2,5,8}` |
+| r5c5 | `{2,5,7,8}` |
+| r6c6 | `{2,3,5,8}` |
+| other box-5 cells | no `2`, `5`, or `8` |
+
+Action:
+Reduce the three cells to subsets of `{2,5,8}` only.
+
+### 8. XYZ-Wing
+Definition:
+A 3-candidate pivot and two 2-candidate pincers force a shared digit that can be eliminated from common peers.
+
+Minimal scenario:
+
+| Role | Cell | Candidates |
+| --- | --- | --- |
+| Pivot | r5c5 | `{1,2,3}` |
+| Pincer A | r5c2 | `{1,2}` |
+| Pincer B | r2c5 | `{1,3}` |
+
+Observation:
+`1` is the pincer-shared digit. Any cell that sees all three cannot contain `1`.
+
+Action:
+Eliminate `1` from common peers of pivot + both pincers.
+
+## Result Model
+
+`solve_from_string()` returns a `SolveResult` with:
+
+- `status`: `solved`, `stalled`, or `invalid`
+- `grid_string`: final grid string
+- `steps`: ordered list of applied steps
+- `technique_counts`: count per technique used
+- `difficulty`: `easy`, `medium`, `hard`, `expert`, or `unsolved`
+- `message`: contextual message
+
+Difficulty is derived from the hardest technique used (or fallback search usage).
 
 ## Installation
 
@@ -61,25 +207,15 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-## Pre-commit Hooks
-
-Install and enable local hooks:
+Install developer tooling:
 
 ```bash
 pip install -e .[dev]
-pre-commit install
-pre-commit install --hook-type pre-push
 ```
 
-Run hooks across the repo:
+## Running
 
-```bash
-pre-commit run --all-files
-```
-
-## Usage
-
-### Python API (planned)
+### Python API
 
 ```python
 from sudoku_solver import solve_from_string
@@ -88,42 +224,110 @@ puzzle = "53..7....6..195....98....6.8...6...34..8..6...2...1.6....28....419..5.
 result = solve_from_string(puzzle)
 
 print(result.status)
+print(result.difficulty)
 print(result.grid_string)
-print(len(result.steps))
+print(result.technique_counts)
 ```
 
-### CLI (planned)
+### CLI
+
+Single puzzle:
 
 ```bash
 python -m sudoku_solver "<81-char-puzzle>"
 python -m sudoku_solver "<81-char-puzzle>" --show-steps
+python -m sudoku_solver "<81-char-puzzle>" --show-telemetry
 python -m sudoku_solver "<81-char-puzzle>" --max-steps 200
-python -m sudoku_solver --puzzle-file top1465.txt
-python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 2 --show-steps
+```
+
+Puzzle file mode:
+
+```bash
+python -m sudoku_solver --puzzle-file puzzles/top1465.txt
+python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 2
+python -m sudoku_solver --puzzle-file puzzles/top1465.txt --show-steps --show-telemetry
 ```
 
 ### Benchmark Harness
-
-Run batch performance benchmarks over a puzzle corpus:
 
 ```bash
 python scripts/benchmark.py puzzles/top1465.txt
 python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --progress-every 500
 ```
 
-## CI
-
-- PR/push CI runs formatter/lint, mypy, unit tests, and branch coverage with a 99% minimum.
-- Nightly/manual CI runs full dataset regression checks on `puzzles/top95.txt` and `puzzles/top1465.txt`, then uploads benchmark artifacts.
-
 ## Input Format
 
-- 81-character string
-- Digits `1-9` for filled cells
-- `0` or `.` for empty cells
+- Exactly 81 characters.
+- `1-9` for filled cells.
+- `.` or `0` for empty cells.
 
-## Non-Goals for v1
+## Repository Structure
 
-- Guessing/backtracking
-- Advanced techniques (triples, X-Wing, chains, etc.)
-- GUI/web interface
+- `sudoku_solver/grid.py`: parsing, formatting, and givens validation.
+- `sudoku_solver/candidates.py`: candidate generation for empty cells.
+- `sudoku_solver/units.py`: row/column/box helpers and peer calculation.
+- `sudoku_solver/techniques/`: individual technique implementations.
+- `sudoku_solver/solver.py`: orchestration loop, step application, fallback search, difficulty classification.
+- `sudoku_solver/cli.py`: CLI parser, single/file runners, progress and reporting output.
+- `sudoku_solver/types.py`: core dataclasses/enums (`Grid`, `Step`, `SolveResult`, etc.).
+- `scripts/benchmark.py`: dataset timing and throughput reporting.
+- `tests/`: unit, internal, regression, technique, and property tests.
+- `puzzles/`: bundled puzzle corpora.
+
+## Code Data Flow
+
+1. Parse input (`parse_grid`) and validate puzzle consistency.
+2. Build candidate sets for empty cells (`get_candidates`).
+3. Iterate technique functions in fixed order and request one `Step` at a time.
+4. Apply step placements/eliminations (`_apply_step`) and update state.
+5. Repeat until solved or no technique can progress.
+6. If stalled by techniques, run uniqueness-aware fallback search.
+7. Return `SolveResult` with final status, steps, telemetry, and difficulty.
+
+## Quality Checks
+
+### Pre-commit hooks
+
+```bash
+pre-commit install
+pre-commit install --hook-type pre-push
+pre-commit run --all-files
+```
+
+### Local checks
+
+```bash
+ruff format --check .
+ruff check .
+mypy
+python -m unittest discover -s tests -t . -v
+python -m coverage run --branch --source=sudoku_solver -m unittest discover -s tests -t .
+python -m coverage report -m
+```
+
+## CI
+
+- PR/push CI runs:
+  - Ruff format check
+  - Ruff lint
+  - Mypy type checking
+  - Unit tests
+  - Branch coverage gate (minimum 99%)
+- Scheduled/manual CI additionally runs:
+  - Dataset regression on `puzzles/top95.txt` and `puzzles/top1465.txt`
+  - Benchmark artifact generation
+
+## Contributing
+
+1. Create a branch for your change.
+2. Install dev dependencies: `pip install -e .[dev]`.
+3. Enable hooks: `pre-commit install` and `pre-commit install --hook-type pre-push`.
+4. Add or update tests with any code changes.
+5. Run local checks before opening a PR.
+6. Open a PR with a clear description of behavior changes and test evidence.
+
+Recommended contribution pattern:
+
+- Keep technique changes isolated per PR when possible.
+- Include at least one regression test for each bug fix.
+- If adding a technique, document it in this README and add focused tests under `tests/techniques/`.
