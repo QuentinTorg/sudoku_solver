@@ -53,3 +53,4 @@ class SolveResult:
     grid_string: str
     steps: list[Step] = field(default_factory=list)
     message: str = ""
+    technique_counts: dict[TechniqueName, int] = field(default_factory=dict)

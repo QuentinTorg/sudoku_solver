@@ -12,7 +12,7 @@ from sudoku_solver.techniques import (
     apply_naked_triple,
     apply_xyz_wing,
 )
-from sudoku_solver.types import Grid, SolveResult, SolveStatus, Step
+from sudoku_solver.types import Grid, SolveResult, SolveStatus, Step, TechniqueName
 
 
 def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
@@ -29,6 +29,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
             grid_string=format_grid(solved_grid),
             steps=[],
             message="Puzzle is already solved.",
+            technique_counts={},
         )
 
     candidates = get_candidates(Grid(cells=tuple(cells)))
@@ -43,6 +44,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 grid_string=format_grid(current_grid),
                 steps=steps,
                 message=contradiction,
+                technique_counts=_count_techniques(steps),
             )
 
         if 0 not in cells:
@@ -53,6 +55,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 grid_string=format_grid(solved_grid),
                 steps=steps,
                 message="Puzzle solved with configured techniques.",
+                technique_counts=_count_techniques(steps),
             )
 
         progress = False
@@ -70,6 +73,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     grid_string=format_grid(invalid_grid),
                     steps=steps,
                     message=error,
+                    technique_counts=_count_techniques(steps),
                 )
             if not changed:
                 continue
@@ -90,6 +94,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     grid_string=format_grid(solved_grid),
                     steps=steps,
                     message="Puzzle solved with fallback search.",
+                    technique_counts=_count_techniques(steps),
                 )
             if solution_count == 0:
                 invalid_grid = Grid(cells=tuple(cells))
@@ -99,6 +104,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     grid_string=format_grid(invalid_grid),
                     steps=steps,
                     message="No valid solution exists for current grid state.",
+                    technique_counts=_count_techniques(steps),
                 )
 
             stalled_grid = Grid(cells=tuple(cells))
@@ -108,6 +114,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 grid_string=format_grid(stalled_grid),
                 steps=steps,
                 message="No further v1 moves were applied.",
+                technique_counts=_count_techniques(steps),
             )
 
 
@@ -288,3 +295,10 @@ def _find_unique_solution(cells: list[int]) -> tuple[tuple[int, ...] | None, int
     if len(solutions) == 1:
         return solutions[0], 1
     return None, len(solutions)
+
+
+def _count_techniques(steps: list[Step]) -> dict[TechniqueName, int]:
+    counts: dict[TechniqueName, int] = {}
+    for step in steps:
+        counts[step.technique] = counts.get(step.technique, 0) + 1
+    return counts

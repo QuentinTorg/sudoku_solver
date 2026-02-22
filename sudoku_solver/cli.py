@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from sudoku_solver.solver import solve_from_string
-from sudoku_solver.types import SolveResult, SolveStatus
+from sudoku_solver.types import SolveResult, SolveStatus, TechniqueName
 
 PROGRESS_INTERVAL = 1000
 
@@ -24,6 +24,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Stop file-mode run after this many failed puzzles",
     )
     parser.add_argument("--show-steps", action="store_true", help="Print step trace")
+    parser.add_argument(
+        "--show-telemetry",
+        action="store_true",
+        help="Print technique usage counts",
+    )
     parser.add_argument("--max-steps", type=int, default=None, help="Maximum steps to emit")
     return parser
 
@@ -42,6 +47,7 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.puzzle_file),
             max_failures=args.max_failures,
             show_steps=args.show_steps,
+            show_telemetry=args.show_telemetry,
             max_steps=args.max_steps,
         )
 
@@ -57,6 +63,8 @@ def main(argv: list[str] | None = None) -> int:
                 f"- {step.technique.value} "
                 f"placements={step.placements} eliminations={step.eliminations}"
             )
+    if args.show_telemetry:
+        _print_telemetry(result.technique_counts)
 
     if result.status is SolveStatus.INVALID:
         return 2
@@ -75,6 +83,7 @@ def _run_puzzle_file(
     *,
     max_failures: int | None,
     show_steps: bool,
+    show_telemetry: bool,
     max_steps: int | None,
 ) -> int:
     try:
@@ -88,6 +97,7 @@ def _run_puzzle_file(
     stalled = 0
     invalid = 0
     failures: list[tuple[int, str, str, str | None]] = []
+    technique_counts: dict[TechniqueName, int] = {}
     stopped_early = False
 
     for line_number, raw_line in enumerate(lines, start=1):
@@ -106,12 +116,14 @@ def _run_puzzle_file(
 
         if result.status is SolveStatus.SOLVED:
             solved += 1
+            _merge_telemetry(technique_counts, result.technique_counts)
             _maybe_print_progress(total, solved, stalled, invalid)
             continue
 
         if result.status is SolveStatus.STALLED:
             stalled += 1
             failures.append((line_number, "stalled", result.message, result.grid_string))
+            _merge_telemetry(technique_counts, result.technique_counts)
             if show_steps and result.steps:
                 _print_file_steps(line_number, result, max_steps)
             _maybe_print_progress(total, solved, stalled, invalid)
@@ -122,6 +134,7 @@ def _run_puzzle_file(
 
         invalid += 1
         failures.append((line_number, "invalid", result.message, result.grid_string))
+        _merge_telemetry(technique_counts, result.technique_counts)
         if show_steps and result.steps:
             _print_file_steps(line_number, result, max_steps)
         _maybe_print_progress(total, solved, stalled, invalid)
@@ -136,6 +149,8 @@ def _run_puzzle_file(
     print(f"invalid: {invalid}")
     if stopped_early:
         print(f"stopped_early: reached max_failures={max_failures}")
+    if show_telemetry:
+        _print_telemetry(technique_counts)
 
     if failures:
         print(f"failures: {len(failures)}")
@@ -164,3 +179,20 @@ def _maybe_print_progress(total: int, solved: int, stalled: int, invalid: int) -
         f"progress: processed={total} solved={solved} stalled={stalled} invalid={invalid}",
         flush=True,
     )
+
+
+def _print_telemetry(technique_counts: dict[TechniqueName, int]) -> None:
+    print("techniques:")
+    if not technique_counts:
+        print("- none")
+        return
+    for technique_name in sorted(technique_counts, key=lambda item: item.value):
+        print(f"- {technique_name.value}: {technique_counts[technique_name]}")
+
+
+def _merge_telemetry(
+    aggregate: dict[TechniqueName, int],
+    new_counts: dict[TechniqueName, int],
+) -> None:
+    for technique_name, count in new_counts.items():
+        aggregate[technique_name] = aggregate.get(technique_name, 0) + count

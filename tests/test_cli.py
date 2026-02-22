@@ -10,9 +10,12 @@ from sudoku_solver.types import Grid, SolveResult, SolveStatus, Step, TechniqueN
 class CliTests(unittest.TestCase):
     def test_build_parser_handles_required_and_optional_args(self) -> None:
         parser = build_parser()
-        args = parser.parse_args(["." * 81, "--show-steps", "--max-steps", "10"])
+        args = parser.parse_args(
+            ["." * 81, "--show-steps", "--show-telemetry", "--max-steps", "10"]
+        )
         self.assertEqual(args.puzzle, "." * 81)
         self.assertTrue(args.show_steps)
+        self.assertTrue(args.show_telemetry)
         self.assertEqual(args.max_steps, 10)
 
     def test_build_parser_handles_puzzle_file_mode(self) -> None:
@@ -189,6 +192,28 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("- naked_single placements=[(0, 1)] eliminations=[]", output)
 
+    def test_main_prints_single_puzzle_telemetry(self) -> None:
+        fake = SolveResult(
+            status=SolveStatus.SOLVED,
+            grid=Grid(cells=(0,) * 81),
+            grid_string="." * 81,
+            steps=[],
+            message="",
+            technique_counts={
+                TechniqueName.NAKED_SINGLE: 2,
+                TechniqueName.HIDDEN_SINGLE: 1,
+            },
+        )
+        with patch("sudoku_solver.cli.solve_from_string", return_value=fake):
+            with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+                code = main(["." * 81, "--show-telemetry"])
+
+        output = mock_stdout.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn("techniques:", output)
+        self.assertIn("- hidden_single: 1", output)
+        self.assertIn("- naked_single: 2", output)
+
     def test_main_ignores_comments_and_blank_lines(self) -> None:
         solved = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
         with NamedTemporaryFile("w+", encoding="utf-8", delete=True) as tmp:
@@ -246,6 +271,42 @@ class CliTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertIn("progress: processed=1000 solved=1000 stalled=0 invalid=0", output)
             self.assertIn("total: 1000", output)
+
+    def test_main_prints_file_telemetry(self) -> None:
+        solved = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+        with NamedTemporaryFile("w+", encoding="utf-8", delete=True) as tmp:
+            tmp.write(solved + "\n")
+            tmp.write(solved + "\n")
+            tmp.flush()
+
+            fake_solved = SolveResult(
+                status=SolveStatus.SOLVED,
+                grid=Grid(cells=tuple(int(value) for value in solved)),
+                grid_string=solved,
+                steps=[],
+                message="",
+                technique_counts={TechniqueName.NAKED_SINGLE: 1},
+            )
+            fake_stalled = SolveResult(
+                status=SolveStatus.STALLED,
+                grid=Grid(cells=(0,) * 81),
+                grid_string="." * 81,
+                steps=[],
+                message="stalled",
+                technique_counts={TechniqueName.NAKED_SINGLE: 2},
+            )
+
+            with patch(
+                "sudoku_solver.cli.solve_from_string",
+                side_effect=[fake_solved, fake_stalled],
+            ):
+                with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+                    code = main(["--puzzle-file", tmp.name, "--show-telemetry"])
+
+        output = mock_stdout.getvalue()
+        self.assertEqual(code, 1)
+        self.assertIn("techniques:", output)
+        self.assertIn("- naked_single: 3", output)
 
 
 if __name__ == "__main__":
