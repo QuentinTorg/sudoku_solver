@@ -29,6 +29,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print technique usage counts",
     )
+    parser.add_argument(
+        "--allow-fallback-search",
+        action="store_true",
+        help="Allow fallback search after human techniques stall",
+    )
     parser.add_argument("--max-steps", type=int, default=None, help="Maximum steps to emit")
     return parser
 
@@ -48,13 +53,14 @@ def main(argv: list[str] | None = None) -> int:
             max_failures=args.max_failures,
             show_steps=args.show_steps,
             show_telemetry=args.show_telemetry,
+            allow_fallback_search=args.allow_fallback_search,
             max_steps=args.max_steps,
         )
 
     if args.puzzle is None:
         parser.error("Provide a puzzle string or use --puzzle-file.")
 
-    result = solve_from_string(args.puzzle)
+    result = solve_from_string(args.puzzle, allow_fallback_search=args.allow_fallback_search)
     _print_single_result(result)
 
     if args.show_steps:
@@ -74,6 +80,7 @@ def main(argv: list[str] | None = None) -> int:
 def _print_single_result(result: SolveResult) -> None:
     print(f"status: {result.status.value}")
     print(f"difficulty: {result.difficulty.value}")
+    print(f"used_fallback_search: {str(result.used_fallback_search).lower()}")
     print(f"grid: {result.grid_string}")
     if result.message:
         print(f"message: {result.message}")
@@ -85,6 +92,7 @@ def _run_puzzle_file(
     max_failures: int | None,
     show_steps: bool,
     show_telemetry: bool,
+    allow_fallback_search: bool,
     max_steps: int | None,
 ) -> int:
     try:
@@ -100,6 +108,7 @@ def _run_puzzle_file(
     failures: list[tuple[int, str, str, str | None]] = []
     technique_counts: dict[TechniqueName, int] = {}
     difficulty_counts: dict[DifficultyRating, int] = {}
+    solved_with_fallback = 0
     stopped_early = False
 
     for line_number, raw_line in enumerate(lines, start=1):
@@ -109,7 +118,7 @@ def _run_puzzle_file(
 
         total += 1
         try:
-            result = solve_from_string(puzzle)
+            result = solve_from_string(puzzle, allow_fallback_search=allow_fallback_search)
         except ValueError as exc:
             invalid += 1
             failures.append((line_number, "invalid", str(exc), None))
@@ -118,6 +127,8 @@ def _run_puzzle_file(
 
         if result.status is SolveStatus.SOLVED:
             solved += 1
+            if result.used_fallback_search:
+                solved_with_fallback += 1
             _merge_telemetry(technique_counts, result.technique_counts)
             difficulty_counts[result.difficulty] = difficulty_counts.get(result.difficulty, 0) + 1
             _maybe_print_progress(total, solved, stalled, invalid)
@@ -150,6 +161,7 @@ def _run_puzzle_file(
     print(f"file: {path}")
     print(f"total: {total}")
     print(f"solved: {solved}")
+    print(f"solved_with_fallback: {solved_with_fallback}")
     print(f"stalled: {stalled}")
     print(f"invalid: {invalid}")
     print("difficulty:")

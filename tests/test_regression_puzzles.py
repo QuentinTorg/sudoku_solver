@@ -3,7 +3,7 @@ import unittest
 from sudoku_solver.solver import solve_from_string
 from sudoku_solver.types import SolveStatus
 
-# Puzzles that should solve with the current enabled technique set.
+# Puzzles that should solve when fallback search is enabled.
 REGRESSION_SOLVED_PUZZLES = [
     (
         "top1465_line1",
@@ -16,7 +16,7 @@ class RegressionPuzzleTests(unittest.TestCase):
     def test_regression_puzzles_are_solved(self) -> None:
         for label, puzzle in REGRESSION_SOLVED_PUZZLES:
             with self.subTest(puzzle=label):
-                result = solve_from_string(puzzle)
+                result = solve_from_string(puzzle, allow_fallback_search=True)
                 self.assertEqual(result.status, SolveStatus.SOLVED)
 
 

@@ -11,11 +11,19 @@ class CliTests(unittest.TestCase):
     def test_build_parser_handles_required_and_optional_args(self) -> None:
         parser = build_parser()
         args = parser.parse_args(
-            ["." * 81, "--show-steps", "--show-telemetry", "--max-steps", "10"]
+            [
+                "." * 81,
+                "--show-steps",
+                "--show-telemetry",
+                "--allow-fallback-search",
+                "--max-steps",
+                "10",
+            ]
         )
         self.assertEqual(args.puzzle, "." * 81)
         self.assertTrue(args.show_steps)
         self.assertTrue(args.show_telemetry)
+        self.assertTrue(args.allow_fallback_search)
         self.assertEqual(args.max_steps, 10)
 
     def test_build_parser_handles_puzzle_file_mode(self) -> None:
@@ -27,6 +35,34 @@ class CliTests(unittest.TestCase):
     def test_main_returns_success_for_valid_input(self) -> None:
         code = main(["." * 81])
         self.assertEqual(code, 0)
+
+    def test_main_allow_fallback_passes_fallback_flag_to_solver(self) -> None:
+        fake = SolveResult(
+            status=SolveStatus.SOLVED,
+            grid=Grid(cells=(0,) * 81),
+            grid_string="." * 81,
+            steps=[],
+            message="",
+        )
+        with patch("sudoku_solver.cli.solve_from_string", return_value=fake) as mock_solve:
+            code = main(["." * 81, "--allow-fallback-search"])
+
+        self.assertEqual(code, 0)
+        mock_solve.assert_called_once_with("." * 81, allow_fallback_search=True)
+
+    def test_main_default_mode_disables_fallback_search(self) -> None:
+        fake = SolveResult(
+            status=SolveStatus.STALLED,
+            grid=Grid(cells=(0,) * 81),
+            grid_string="." * 81,
+            steps=[],
+            message="",
+        )
+        with patch("sudoku_solver.cli.solve_from_string", return_value=fake) as mock_solve:
+            code = main(["." * 81])
+
+        self.assertEqual(code, 0)
+        mock_solve.assert_called_once_with("." * 81, allow_fallback_search=False)
 
     def test_main_rejects_negative_max_failures(self) -> None:
         with self.assertRaises(SystemExit):
@@ -62,6 +98,7 @@ class CliTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn("total: 2", output)
             self.assertIn("solved: 1", output)
+            self.assertIn("solved_with_fallback: 0", output)
             self.assertIn("stalled: 1", output)
             self.assertIn("line 2: stalled", output)
             self.assertIn(f"ending_grid: {'.' * 81}", output)
@@ -167,6 +204,7 @@ class CliTests(unittest.TestCase):
         output = mock_stdout.getvalue()
         self.assertEqual(code, 0)
         self.assertIn("status: solved", output)
+        self.assertIn("used_fallback_search: false", output)
         self.assertIn("grid: " + "." * 81, output)
         self.assertNotIn("message:", output)
 
@@ -199,6 +237,7 @@ class CliTests(unittest.TestCase):
             grid_string="." * 81,
             steps=[],
             message="",
+            used_fallback_search=True,
             technique_counts={
                 TechniqueName.NAKED_SINGLE: 2,
                 TechniqueName.HIDDEN_SINGLE: 1,
@@ -210,6 +249,7 @@ class CliTests(unittest.TestCase):
 
         output = mock_stdout.getvalue()
         self.assertEqual(code, 0)
+        self.assertIn("used_fallback_search: true", output)
         self.assertIn("techniques:", output)
         self.assertIn("- hidden_single: 1", output)
         self.assertIn("- naked_single: 2", output)
@@ -285,6 +325,7 @@ class CliTests(unittest.TestCase):
                 grid_string=solved,
                 steps=[],
                 message="",
+                used_fallback_search=True,
                 technique_counts={TechniqueName.NAKED_SINGLE: 1},
             )
             fake_stalled = SolveResult(
@@ -305,6 +346,7 @@ class CliTests(unittest.TestCase):
 
         output = mock_stdout.getvalue()
         self.assertEqual(code, 1)
+        self.assertIn("solved_with_fallback: 1", output)
         self.assertIn("techniques:", output)
         self.assertIn("- naked_single: 3", output)
 

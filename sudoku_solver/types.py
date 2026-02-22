@@ -65,3 +65,4 @@ class SolveResult:
     message: str = ""
     technique_counts: dict[TechniqueName, int] = field(default_factory=dict)
     difficulty: DifficultyRating = DifficultyRating.UNSOLVED
+    used_fallback_search: bool = False

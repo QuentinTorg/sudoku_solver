@@ -22,7 +22,12 @@ from sudoku_solver.types import (
 )
 
 
-def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
+def solve(
+    grid: Grid,
+    *,
+    techniques: list[str] | None = None,
+    allow_fallback_search: bool = False,
+) -> SolveResult:
     """Solve a Sudoku grid using configured human techniques."""
     technique_order = _resolve_techniques(techniques)
     cells = list(grid.cells)
@@ -38,6 +43,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
             message="Puzzle is already solved.",
             technique_counts={},
             difficulty=DifficultyRating.EASY,
+            used_fallback_search=False,
         )
 
     candidates = get_candidates(Grid(cells=tuple(cells)))
@@ -54,6 +60,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 message=contradiction,
                 technique_counts=_count_techniques(steps),
                 difficulty=DifficultyRating.UNSOLVED,
+                used_fallback_search=False,
             )
 
         if 0 not in cells:
@@ -66,6 +73,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 message="Puzzle solved with configured techniques.",
                 technique_counts=_count_techniques(steps),
                 difficulty=_classify_difficulty(steps, used_fallback=False),
+                used_fallback_search=False,
             )
 
         progress = False
@@ -85,6 +93,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     message=error,
                     technique_counts=_count_techniques(steps),
                     difficulty=DifficultyRating.UNSOLVED,
+                    used_fallback_search=False,
                 )
             if not changed:
                 continue
@@ -96,6 +105,22 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
             break
 
         if not progress:
+            if not allow_fallback_search:
+                stalled_grid = Grid(cells=tuple(cells))
+                return SolveResult(
+                    status=SolveStatus.STALLED,
+                    grid=stalled_grid,
+                    grid_string=format_grid(stalled_grid),
+                    steps=steps,
+                    message=(
+                        "No further human-technique moves were applied. "
+                        "Fallback search is disabled."
+                    ),
+                    technique_counts=_count_techniques(steps),
+                    difficulty=DifficultyRating.UNSOLVED,
+                    used_fallback_search=False,
+                )
+
             unique_solution, solution_count = _find_unique_solution(cells)
             if unique_solution is not None:
                 solved_grid = Grid(cells=unique_solution)
@@ -107,6 +132,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     message="Puzzle solved with fallback search.",
                     technique_counts=_count_techniques(steps),
                     difficulty=_classify_difficulty(steps, used_fallback=True),
+                    used_fallback_search=True,
                 )
             if solution_count == 0:
                 invalid_grid = Grid(cells=tuple(cells))
@@ -118,6 +144,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     message="No valid solution exists for current grid state.",
                     technique_counts=_count_techniques(steps),
                     difficulty=DifficultyRating.UNSOLVED,
+                    used_fallback_search=False,
                 )
 
             stalled_grid = Grid(cells=tuple(cells))
@@ -126,16 +153,26 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 grid=stalled_grid,
                 grid_string=format_grid(stalled_grid),
                 steps=steps,
-                message="No further v1 moves were applied.",
+                message="No further human-technique moves were applied.",
                 technique_counts=_count_techniques(steps),
                 difficulty=DifficultyRating.UNSOLVED,
+                used_fallback_search=False,
             )
 
 
-def solve_from_string(puzzle: str, *, techniques: list[str] | None = None) -> SolveResult:
+def solve_from_string(
+    puzzle: str,
+    *,
+    techniques: list[str] | None = None,
+    allow_fallback_search: bool = False,
+) -> SolveResult:
     """Parse and solve from puzzle string input."""
     grid = parse_grid(puzzle)
-    return solve(grid, techniques=techniques)
+    return solve(
+        grid,
+        techniques=techniques,
+        allow_fallback_search=allow_fallback_search,
+    )
 
 
 def _resolve_techniques(

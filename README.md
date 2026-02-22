@@ -10,7 +10,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
 
 - Solves 9x9 Sudoku puzzles from a single puzzle string or a puzzle file.
 - Applies a deterministic sequence of human-style techniques and records each applied step.
-- Falls back to a bounded uniqueness search when technique progress stops.
+- Can optionally use a bounded uniqueness search after human techniques stall.
 - Reports structured outcomes (`solved`, `stalled`, `invalid`), difficulty rating, and optional telemetry.
 - Includes unit tests, property tests (when `hypothesis` is installed), linting, typing checks, and coverage reporting.
 
@@ -26,9 +26,11 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   7. Hidden Triple
   8. XYZ-Wing
 - Fallback search:
-  Uniqueness-aware backtracking is used only when no configured technique can advance the grid.
+  Uniqueness-aware backtracking is available when no configured technique can advance the grid.
+  It is disabled by default; use `allow_fallback_search=True` (API) or
+  `--allow-fallback-search` (CLI) to enable it.
 - Result metadata:
-  `steps`, `technique_counts`, and `difficulty` are returned for every solve attempt.
+  `steps`, `technique_counts`, `difficulty`, and `used_fallback_search` are returned for every solve attempt.
 
 ## Sudoku Terms (Quick Glossary)
 
@@ -240,6 +242,7 @@ Eliminate `1` from common peers of pivot + both pincers (for example from `r4c4`
 - `steps`: ordered list of applied steps
 - `technique_counts`: count per technique used
 - `difficulty`: `easy`, `medium`, `hard`, `expert`, or `unsolved`
+- `used_fallback_search`: `true` if non-human fallback search was used to finish
 - `message`: contextual message
 
 Difficulty is derived from the hardest technique used (or fallback search usage).
@@ -267,9 +270,11 @@ from sudoku_solver import solve_from_string
 
 puzzle = "53..7....6..195....98....6.8...6...34..8..6...2...1.6....28....419..5....8..79"
 result = solve_from_string(puzzle)
+fallback_result = solve_from_string(puzzle, allow_fallback_search=True)
 
 print(result.status)
 print(result.difficulty)
+print(result.used_fallback_search)
 print(result.grid_string)
 print(result.technique_counts)
 ```
@@ -282,6 +287,7 @@ Single puzzle:
 python -m sudoku_solver "<81-char-puzzle>"
 python -m sudoku_solver "<81-char-puzzle>" --show-steps
 python -m sudoku_solver "<81-char-puzzle>" --show-telemetry
+python -m sudoku_solver "<81-char-puzzle>" --allow-fallback-search
 python -m sudoku_solver "<81-char-puzzle>" --max-steps 200
 ```
 
@@ -290,6 +296,7 @@ Puzzle file mode:
 ```bash
 python -m sudoku_solver --puzzle-file puzzles/top1465.txt
 python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 2
+python -m sudoku_solver --puzzle-file puzzles/top1465.txt --allow-fallback-search
 python -m sudoku_solver --puzzle-file puzzles/top1465.txt --show-steps --show-telemetry
 ```
 
@@ -297,6 +304,7 @@ python -m sudoku_solver --puzzle-file puzzles/top1465.txt --show-steps --show-te
 
 ```bash
 python scripts/benchmark.py puzzles/top1465.txt
+python scripts/benchmark.py puzzles/top1465.txt --allow-fallback-search
 python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --progress-every 500
 ```
 
@@ -312,7 +320,7 @@ python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --p
 - `sudoku_solver/candidates.py`: candidate generation for empty cells.
 - `sudoku_solver/units.py`: row/column/box helpers and peer calculation.
 - `sudoku_solver/techniques/`: individual technique implementations.
-- `sudoku_solver/solver.py`: orchestration loop, step application, fallback search, difficulty classification.
+- `sudoku_solver/solver.py`: orchestration loop, step application, optional fallback search, difficulty classification.
 - `sudoku_solver/cli.py`: CLI parser, single/file runners, progress and reporting output.
 - `sudoku_solver/types.py`: core dataclasses/enums (`Grid`, `Step`, `SolveResult`, etc.).
 - `scripts/benchmark.py`: dataset timing and throughput reporting.
@@ -326,8 +334,8 @@ python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --p
 3. Iterate technique functions in fixed order and request one `Step` at a time.
 4. Apply step placements/eliminations (`_apply_step`) and update state.
 5. Repeat until solved or no technique can progress.
-6. If stalled by techniques, run uniqueness-aware fallback search.
-7. Return `SolveResult` with final status, steps, telemetry, and difficulty.
+6. If stalled by techniques and fallback is enabled, run uniqueness-aware fallback search.
+7. Return `SolveResult` with final status, steps, telemetry, difficulty, and fallback usage flag.
 
 ## Quality Checks
 

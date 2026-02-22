@@ -138,13 +138,37 @@ class SolverInternalTests(unittest.TestCase):
             "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
         )
         with patch("sudoku_solver.solver.apply_naked_single", return_value=no_change_step):
-            result = solve(parse_grid(puzzle), techniques=["naked_single"])
+            result = solve(
+                parse_grid(puzzle),
+                techniques=["naked_single"],
+                allow_fallback_search=True,
+            )
         self.assertEqual(result.status, SolveStatus.SOLVED)
         self.assertEqual(result.message, "Puzzle solved with fallback search.")
+        self.assertTrue(result.used_fallback_search)
+
+    def test_solve_human_only_stalls_when_techniques_cannot_progress(self) -> None:
+        no_change_step = Step(
+            technique=TechniqueName.NAKED_SINGLE,
+            placements=[],
+            eliminations=[(0, 9)],
+        )
+        puzzle = (
+            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
+        )
+        with patch("sudoku_solver.solver.apply_naked_single", return_value=no_change_step):
+            result = solve(
+                parse_grid(puzzle),
+                techniques=["naked_single"],
+                allow_fallback_search=False,
+            )
+        self.assertEqual(result.status, SolveStatus.STALLED)
+        self.assertFalse(result.used_fallback_search)
+        self.assertIn("Fallback search is disabled.", result.message)
 
     def test_solve_returns_invalid_when_fallback_finds_no_solution(self) -> None:
         with patch("sudoku_solver.solver._find_unique_solution", return_value=(None, 0)):
-            result = solve(parse_grid("." * 81), techniques=[])
+            result = solve(parse_grid("." * 81), techniques=[], allow_fallback_search=True)
         self.assertEqual(result.status, SolveStatus.INVALID)
         self.assertIn("No valid solution exists", result.message)
 

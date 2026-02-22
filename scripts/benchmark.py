@@ -40,6 +40,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=5,
         help="Print the N slowest puzzles by solve time",
     )
+    parser.add_argument(
+        "--allow-fallback-search",
+        action="store_true",
+        help="Allow fallback search after human techniques stall",
+    )
     return parser
 
 
@@ -74,7 +79,10 @@ def main(argv: list[str] | None = None) -> int:
 
         start = time.perf_counter()
         try:
-            result = solve_from_string(puzzle)
+            result = solve_from_string(
+                puzzle,
+                allow_fallback_search=args.allow_fallback_search,
+            )
             status = result.status
         except ValueError:
             status = SolveStatus.INVALID
