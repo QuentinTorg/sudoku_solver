@@ -85,7 +85,7 @@ def _run_puzzle_file(
     solved = 0
     stalled = 0
     invalid = 0
-    failures: list[tuple[int, str, str]] = []
+    failures: list[tuple[int, str, str, str | None]] = []
     stopped_early = False
 
     for line_number, raw_line in enumerate(lines, start=1):
@@ -98,7 +98,7 @@ def _run_puzzle_file(
             result = solve_from_string(puzzle)
         except ValueError as exc:
             invalid += 1
-            failures.append((line_number, "invalid", str(exc)))
+            failures.append((line_number, "invalid", str(exc), None))
             continue
 
         if result.status is SolveStatus.SOLVED:
@@ -107,7 +107,7 @@ def _run_puzzle_file(
 
         if result.status is SolveStatus.STALLED:
             stalled += 1
-            failures.append((line_number, "stalled", result.message))
+            failures.append((line_number, "stalled", result.message, result.grid_string))
             if show_steps and result.steps:
                 _print_file_steps(line_number, result, max_steps)
             if max_failures is not None and len(failures) >= max_failures:
@@ -116,7 +116,7 @@ def _run_puzzle_file(
             continue
 
         invalid += 1
-        failures.append((line_number, "invalid", result.message))
+        failures.append((line_number, "invalid", result.message, result.grid_string))
         if show_steps and result.steps:
             _print_file_steps(line_number, result, max_steps)
         if max_failures is not None and len(failures) >= max_failures:
@@ -133,8 +133,10 @@ def _run_puzzle_file(
 
     if failures:
         print(f"failures: {len(failures)}")
-        for line_number, status, message in failures:
+        for line_number, status, message, grid_string in failures:
             print(f"- line {line_number}: {status} ({message})")
+            if status == "stalled" and grid_string is not None:
+                print(f"  ending_grid: {grid_string}")
         return 1
 
     return 0

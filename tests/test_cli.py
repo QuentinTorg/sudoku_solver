@@ -39,6 +39,7 @@ class CliTests(unittest.TestCase):
             self.assertIn("solved: 1", output)
             self.assertIn("stalled: 1", output)
             self.assertIn("line 2: stalled", output)
+            self.assertIn(f"ending_grid: {'.' * 81}", output)
 
     def test_main_stops_early_when_max_failures_reached(self) -> None:
         with NamedTemporaryFile("w+", encoding="utf-8", delete=True) as tmp:
