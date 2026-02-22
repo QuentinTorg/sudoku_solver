@@ -12,9 +12,8 @@ Expected behavior:
     cells outside the locked segment, then emit a `Step`.
 """
 
-from sudoku_solver.types import Grid, Step
 from sudoku_solver.grid import format_grid
-from sudoku_solver.types import TechniqueName
+from sudoku_solver.types import Grid, Step, TechniqueName
 from sudoku_solver.units import (
     box_cells,
     box_index,
@@ -114,9 +113,7 @@ def apply_locked_candidates(grid: Grid, candidates: dict[int, set[int]]) -> Step
                         placements=[],
                         eliminations=sorted(eliminations),
                         affected_units=[f"row{row + 1}", f"box{box + 1}"],
-                        rationale=(
-                            f"Digit {digit} in row {row + 1} is confined to box {box + 1}."
-                        ),
+                        rationale=(f"Digit {digit} in row {row + 1} is confined to box {box + 1}."),
                         grid_snapshot_after=format_grid(grid),
                     )
 

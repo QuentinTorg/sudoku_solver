@@ -3,13 +3,13 @@
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
 from sudoku_solver.techniques import (
-    apply_hidden_triple,
     apply_hidden_pair,
     apply_hidden_single,
+    apply_hidden_triple,
     apply_locked_candidates,
-    apply_naked_triple,
     apply_naked_pair,
     apply_naked_single,
+    apply_naked_triple,
     apply_xyz_wing,
 )
 from sudoku_solver.types import Grid, SolveResult, SolveStatus, Step
@@ -173,7 +173,11 @@ def _find_contradiction(cells: list[int], candidates: dict[int, set[int]]) -> st
     return None
 
 
-def _apply_step(cells: list[int], candidates: dict[int, set[int]], step: Step) -> tuple[bool, str | None]:
+def _apply_step(
+    cells: list[int],
+    candidates: dict[int, set[int]],
+    step: Step,
+) -> tuple[bool, str | None]:
     changed = False
 
     for cell_index, digit in step.placements:

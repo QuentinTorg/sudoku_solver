@@ -3,7 +3,6 @@ import unittest
 from sudoku_solver.solver import solve_from_string
 from sudoku_solver.types import SolveStatus
 
-
 # Puzzles that should solve with the current enabled technique set.
 REGRESSION_SOLVED_PUZZLES = [
     (

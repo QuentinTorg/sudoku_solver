@@ -11,8 +11,7 @@ When used:
 from itertools import combinations
 
 from sudoku_solver.grid import format_grid
-from sudoku_solver.types import Grid, Step
-from sudoku_solver.types import TechniqueName
+from sudoku_solver.types import Grid, Step, TechniqueName
 from sudoku_solver.units import all_units
 
 
@@ -28,9 +27,7 @@ def apply_hidden_triple(grid: Grid, candidates: dict[int, set[int]]) -> Step | N
 
         digit_to_cells: dict[int, set[int]] = {
             digit: {
-                cell_index
-                for cell_index in unit_candidate_cells
-                if digit in candidates[cell_index]
+                cell_index for cell_index in unit_candidate_cells if digit in candidates[cell_index]
             }
             for digit in range(1, 10)
         }

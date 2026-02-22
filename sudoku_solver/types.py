@@ -1,10 +1,10 @@
 """Core types used across the solver package."""
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class TechniqueName(str, Enum):
+class TechniqueName(StrEnum):
     """Enumeration of supported human-solving techniques."""
 
     NAKED_SINGLE = "naked_single"
@@ -17,7 +17,7 @@ class TechniqueName(str, Enum):
     XYZ_WING = "xyz_wing"
 
 
-class SolveStatus(str, Enum):
+class SolveStatus(StrEnum):
     """Overall outcome of a solve attempt."""
 
     SOLVED = "solved"

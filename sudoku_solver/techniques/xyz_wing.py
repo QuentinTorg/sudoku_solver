@@ -11,8 +11,7 @@ When used:
 from itertools import combinations
 
 from sudoku_solver.grid import format_grid
-from sudoku_solver.types import Grid, Step
-from sudoku_solver.types import TechniqueName
+from sudoku_solver.types import Grid, Step, TechniqueName
 from sudoku_solver.units import peers
 
 

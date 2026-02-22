@@ -7,7 +7,9 @@ from sudoku_solver.types import TechniqueName
 
 class NakedSingleTechniqueTests(unittest.TestCase):
     def test_apply_naked_single_returns_step_when_move_exists(self) -> None:
-        grid = parse_grid("53467891267219534819834256785976142342685379171392485696153728428741963534528617.")
+        grid = parse_grid(
+            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
+        )
         candidates = {80: {9}}
 
         step = apply_naked_single(grid, candidates)

@@ -26,7 +26,9 @@ class CliTests(unittest.TestCase):
 
     def test_main_reports_failures_from_puzzle_file(self) -> None:
         with NamedTemporaryFile("w+", encoding="utf-8", delete=True) as tmp:
-            tmp.write("534678912672195348198342567859761423426853791713924856961537284287419635345286179\n")
+            tmp.write(
+                "534678912672195348198342567859761423426853791713924856961537284287419635345286179\n"
+            )
             tmp.write("." * 81 + "\n")
             tmp.flush()
 
@@ -43,7 +45,9 @@ class CliTests(unittest.TestCase):
 
     def test_main_stops_early_when_max_failures_reached(self) -> None:
         with NamedTemporaryFile("w+", encoding="utf-8", delete=True) as tmp:
-            tmp.write("534678912672195348198342567859761423426853791713924856961537284287419635345286179\n")
+            tmp.write(
+                "534678912672195348198342567859761423426853791713924856961537284287419635345286179\n"
+            )
             tmp.write("." * 81 + "\n")
             tmp.write("." * 81 + "\n")
             tmp.flush()

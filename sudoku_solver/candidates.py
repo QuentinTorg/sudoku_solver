@@ -3,7 +3,6 @@
 from sudoku_solver.types import Grid
 from sudoku_solver.units import peers
 
-
 Cell = int
 
 
