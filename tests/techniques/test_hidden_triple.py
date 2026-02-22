@@ -26,10 +26,8 @@ class HiddenTripleTechniqueTests(unittest.TestCase):
     def test_apply_hidden_triple_returns_none_when_no_triple_exists(self) -> None:
         grid = parse_grid("." * 81)
         candidates = {
-            0: {1, 2, 4},
-            1: {1, 3, 5},
-            2: {2, 6},
-            3: {3, 7},
+            0: {1, 2},
+            1: {2, 3},
         }
 
         step = apply_hidden_triple(grid, candidates)

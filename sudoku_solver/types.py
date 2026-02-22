@@ -12,6 +12,9 @@ class TechniqueName(str, Enum):
     LOCKED_CANDIDATES = "locked_candidates"
     NAKED_PAIR = "naked_pair"
     HIDDEN_PAIR = "hidden_pair"
+    NAKED_TRIPLE = "naked_triple"
+    HIDDEN_TRIPLE = "hidden_triple"
+    XYZ_WING = "xyz_wing"
 
 
 class SolveStatus(str, Enum):

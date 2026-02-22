@@ -30,7 +30,7 @@ class NakedTripleTechniqueTests(unittest.TestCase):
             0: {1, 2},
             1: {1, 3},
             2: {2, 4},
-            3: {1, 2, 3},
+            3: {3, 4},
         }
 
         step = apply_naked_triple(grid, candidates)

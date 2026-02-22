@@ -3,11 +3,14 @@
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
 from sudoku_solver.techniques import (
+    apply_hidden_triple,
     apply_hidden_pair,
     apply_hidden_single,
     apply_locked_candidates,
+    apply_naked_triple,
     apply_naked_pair,
     apply_naked_single,
+    apply_xyz_wing,
 )
 from sudoku_solver.types import Grid, SolveResult, SolveStatus, Step
 
@@ -78,6 +81,26 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
             break
 
         if not progress:
+            unique_solution, solution_count = _find_unique_solution(cells)
+            if unique_solution is not None:
+                solved_grid = Grid(cells=unique_solution)
+                return SolveResult(
+                    status=SolveStatus.SOLVED,
+                    grid=solved_grid,
+                    grid_string=format_grid(solved_grid),
+                    steps=steps,
+                    message="Puzzle solved with fallback search.",
+                )
+            if solution_count == 0:
+                invalid_grid = Grid(cells=tuple(cells))
+                return SolveResult(
+                    status=SolveStatus.INVALID,
+                    grid=invalid_grid,
+                    grid_string=format_grid(invalid_grid),
+                    steps=steps,
+                    message="No valid solution exists for current grid state.",
+                )
+
             stalled_grid = Grid(cells=tuple(cells))
             return SolveResult(
                 status=SolveStatus.STALLED,
@@ -103,6 +126,9 @@ def _resolve_techniques(
         "locked_candidates": apply_locked_candidates,
         "naked_pair": apply_naked_pair,
         "hidden_pair": apply_hidden_pair,
+        "naked_triple": apply_naked_triple,
+        "hidden_triple": apply_hidden_triple,
+        "xyz_wing": apply_xyz_wing,
     }
     default_order = (
         apply_naked_single,
@@ -110,6 +136,9 @@ def _resolve_techniques(
         apply_locked_candidates,
         apply_naked_pair,
         apply_hidden_pair,
+        apply_naked_triple,
+        apply_hidden_triple,
+        apply_xyz_wing,
     )
 
     if techniques is None:
@@ -180,3 +209,78 @@ def _apply_step(cells: list[int], candidates: dict[int, set[int]], step: Step) -
             del candidates[index]
 
     return changed, None
+
+
+def _find_unique_solution(cells: list[int]) -> tuple[tuple[int, ...] | None, int]:
+    state = list(cells)
+    rows = [set() for _ in range(9)]
+    cols = [set() for _ in range(9)]
+    boxes = [set() for _ in range(9)]
+
+    for index, value in enumerate(state):
+        if value == 0:
+            continue
+        row = index // 9
+        col = index % 9
+        box = (row // 3) * 3 + (col // 3)
+        if value in rows[row] or value in cols[col] or value in boxes[box]:
+            return None, 0
+        rows[row].add(value)
+        cols[col].add(value)
+        boxes[box].add(value)
+
+    solutions: list[tuple[int, ...]] = []
+
+    def backtrack() -> None:
+        if len(solutions) >= 2:
+            return
+
+        best_index = -1
+        best_options: list[int] | None = None
+        for index, value in enumerate(state):
+            if value != 0:
+                continue
+            row = index // 9
+            col = index % 9
+            box = (row // 3) * 3 + (col // 3)
+            options = [
+                digit
+                for digit in range(1, 10)
+                if digit not in rows[row] and digit not in cols[col] and digit not in boxes[box]
+            ]
+            if len(options) == 0:
+                return
+            if best_options is None or len(options) < len(best_options):
+                best_index = index
+                best_options = options
+                if len(best_options) == 1:
+                    break
+
+        if best_index == -1:
+            solutions.append(tuple(state))
+            return
+
+        row = best_index // 9
+        col = best_index % 9
+        box = (row // 3) * 3 + (col // 3)
+        assert best_options is not None
+        for digit in best_options:
+            state[best_index] = digit
+            rows[row].add(digit)
+            cols[col].add(digit)
+            boxes[box].add(digit)
+
+            backtrack()
+
+            state[best_index] = 0
+            rows[row].remove(digit)
+            cols[col].remove(digit)
+            boxes[box].remove(digit)
+
+            if len(solutions) >= 2:
+                return
+
+    backtrack()
+    if len(solutions) == 1:
+        return solutions[0], 1
+    return None, len(solutions)
