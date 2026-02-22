@@ -12,7 +12,14 @@ from sudoku_solver.techniques import (
     apply_naked_triple,
     apply_xyz_wing,
 )
-from sudoku_solver.types import Grid, SolveResult, SolveStatus, Step, TechniqueName
+from sudoku_solver.types import (
+    DifficultyRating,
+    Grid,
+    SolveResult,
+    SolveStatus,
+    Step,
+    TechniqueName,
+)
 
 
 def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
@@ -30,6 +37,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
             steps=[],
             message="Puzzle is already solved.",
             technique_counts={},
+            difficulty=DifficultyRating.EASY,
         )
 
     candidates = get_candidates(Grid(cells=tuple(cells)))
@@ -45,6 +53,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 steps=steps,
                 message=contradiction,
                 technique_counts=_count_techniques(steps),
+                difficulty=DifficultyRating.UNSOLVED,
             )
 
         if 0 not in cells:
@@ -56,6 +65,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 steps=steps,
                 message="Puzzle solved with configured techniques.",
                 technique_counts=_count_techniques(steps),
+                difficulty=_classify_difficulty(steps, used_fallback=False),
             )
 
         progress = False
@@ -74,6 +84,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     steps=steps,
                     message=error,
                     technique_counts=_count_techniques(steps),
+                    difficulty=DifficultyRating.UNSOLVED,
                 )
             if not changed:
                 continue
@@ -95,6 +106,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     steps=steps,
                     message="Puzzle solved with fallback search.",
                     technique_counts=_count_techniques(steps),
+                    difficulty=_classify_difficulty(steps, used_fallback=True),
                 )
             if solution_count == 0:
                 invalid_grid = Grid(cells=tuple(cells))
@@ -105,6 +117,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                     steps=steps,
                     message="No valid solution exists for current grid state.",
                     technique_counts=_count_techniques(steps),
+                    difficulty=DifficultyRating.UNSOLVED,
                 )
 
             stalled_grid = Grid(cells=tuple(cells))
@@ -115,6 +128,7 @@ def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
                 steps=steps,
                 message="No further v1 moves were applied.",
                 technique_counts=_count_techniques(steps),
+                difficulty=DifficultyRating.UNSOLVED,
             )
 
 
@@ -302,3 +316,30 @@ def _count_techniques(steps: list[Step]) -> dict[TechniqueName, int]:
     for step in steps:
         counts[step.technique] = counts.get(step.technique, 0) + 1
     return counts
+
+
+def _classify_difficulty(
+    steps: list[Step],
+    *,
+    used_fallback: bool,
+) -> DifficultyRating:
+    if used_fallback:
+        return DifficultyRating.EXPERT
+    if not steps:
+        return DifficultyRating.EASY
+
+    techniques_used = {step.technique for step in steps}
+    if TechniqueName.XYZ_WING in techniques_used:
+        return DifficultyRating.EXPERT
+    if (
+        TechniqueName.NAKED_TRIPLE in techniques_used
+        or TechniqueName.HIDDEN_TRIPLE in techniques_used
+    ):
+        return DifficultyRating.HARD
+    if (
+        TechniqueName.LOCKED_CANDIDATES in techniques_used
+        or TechniqueName.NAKED_PAIR in techniques_used
+        or TechniqueName.HIDDEN_PAIR in techniques_used
+    ):
+        return DifficultyRating.MEDIUM
+    return DifficultyRating.EASY

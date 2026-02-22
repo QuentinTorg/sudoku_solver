@@ -25,6 +25,16 @@ class SolveStatus(StrEnum):
     INVALID = "invalid"
 
 
+class DifficultyRating(StrEnum):
+    """Difficulty estimate derived from techniques needed to solve."""
+
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+    EXPERT = "expert"
+    UNSOLVED = "unsolved"
+
+
 @dataclass(slots=True)
 class Grid:
     """In-memory representation of a Sudoku grid."""
@@ -54,3 +64,4 @@ class SolveResult:
     steps: list[Step] = field(default_factory=list)
     message: str = ""
     technique_counts: dict[TechniqueName, int] = field(default_factory=dict)
+    difficulty: DifficultyRating = DifficultyRating.UNSOLVED

@@ -1,7 +1,7 @@
 import unittest
 
 from sudoku_solver.solver import solve_from_string
-from sudoku_solver.types import SolveStatus, TechniqueName
+from sudoku_solver.types import DifficultyRating, SolveStatus, TechniqueName
 
 
 class SolverTests(unittest.TestCase):
@@ -11,6 +11,7 @@ class SolverTests(unittest.TestCase):
         self.assertEqual(result.status, SolveStatus.SOLVED)
         self.assertEqual(result.grid_string, solved)
         self.assertEqual(result.steps, [])
+        self.assertEqual(result.difficulty, DifficultyRating.EASY)
 
     def test_solve_from_string_solves_when_v1_step_sequence_is_available(self) -> None:
         almost_solved = (
@@ -22,6 +23,7 @@ class SolverTests(unittest.TestCase):
         self.assertEqual(len(result.steps), 1)
         self.assertEqual(result.steps[0].technique, TechniqueName.NAKED_SINGLE)
         self.assertEqual(result.steps[0].placements, [(80, 9)])
+        self.assertEqual(result.difficulty, DifficultyRating.EASY)
 
     def test_solve_from_string_returns_stalled_when_no_technique_applies(self) -> None:
         blank = "." * 81
@@ -29,6 +31,7 @@ class SolverTests(unittest.TestCase):
         self.assertEqual(result.status, SolveStatus.STALLED)
         self.assertEqual(result.grid_string, blank)
         self.assertEqual(result.steps, [])
+        self.assertEqual(result.difficulty, DifficultyRating.UNSOLVED)
 
 
 if __name__ == "__main__":

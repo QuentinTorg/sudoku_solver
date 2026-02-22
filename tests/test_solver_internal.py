@@ -4,12 +4,13 @@ from unittest.mock import patch
 from sudoku_solver.grid import parse_grid
 from sudoku_solver.solver import (
     _apply_step,
+    _classify_difficulty,
     _find_contradiction,
     _find_unique_solution,
     _resolve_techniques,
     solve,
 )
-from sudoku_solver.types import Grid, SolveStatus, Step, TechniqueName
+from sudoku_solver.types import DifficultyRating, Grid, SolveStatus, Step, TechniqueName
 
 
 class SolverInternalTests(unittest.TestCase):
@@ -162,6 +163,24 @@ class SolverInternalTests(unittest.TestCase):
     def test_solve_reports_invalid_for_short_grid(self) -> None:
         with self.assertRaises(ValueError):
             solve(Grid(cells=(0,) * 80))
+
+    def test_classify_difficulty_returns_medium_for_pair_based_techniques(self) -> None:
+        steps = [
+            Step(technique=TechniqueName.NAKED_SINGLE),
+            Step(technique=TechniqueName.NAKED_PAIR),
+        ]
+        rating = _classify_difficulty(steps, used_fallback=False)
+        self.assertEqual(rating, DifficultyRating.MEDIUM)
+
+    def test_classify_difficulty_returns_hard_for_triples(self) -> None:
+        steps = [Step(technique=TechniqueName.HIDDEN_TRIPLE)]
+        rating = _classify_difficulty(steps, used_fallback=False)
+        self.assertEqual(rating, DifficultyRating.HARD)
+
+    def test_classify_difficulty_returns_expert_for_fallback(self) -> None:
+        steps = [Step(technique=TechniqueName.NAKED_SINGLE)]
+        rating = _classify_difficulty(steps, used_fallback=True)
+        self.assertEqual(rating, DifficultyRating.EXPERT)
 
 
 if __name__ == "__main__":

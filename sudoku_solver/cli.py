@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from sudoku_solver.solver import solve_from_string
-from sudoku_solver.types import SolveResult, SolveStatus, TechniqueName
+from sudoku_solver.types import DifficultyRating, SolveResult, SolveStatus, TechniqueName
 
 PROGRESS_INTERVAL = 1000
 
@@ -73,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _print_single_result(result: SolveResult) -> None:
     print(f"status: {result.status.value}")
+    print(f"difficulty: {result.difficulty.value}")
     print(f"grid: {result.grid_string}")
     if result.message:
         print(f"message: {result.message}")
@@ -98,6 +99,7 @@ def _run_puzzle_file(
     invalid = 0
     failures: list[tuple[int, str, str, str | None]] = []
     technique_counts: dict[TechniqueName, int] = {}
+    difficulty_counts: dict[DifficultyRating, int] = {}
     stopped_early = False
 
     for line_number, raw_line in enumerate(lines, start=1):
@@ -117,6 +119,7 @@ def _run_puzzle_file(
         if result.status is SolveStatus.SOLVED:
             solved += 1
             _merge_telemetry(technique_counts, result.technique_counts)
+            difficulty_counts[result.difficulty] = difficulty_counts.get(result.difficulty, 0) + 1
             _maybe_print_progress(total, solved, stalled, invalid)
             continue
 
@@ -124,6 +127,7 @@ def _run_puzzle_file(
             stalled += 1
             failures.append((line_number, "stalled", result.message, result.grid_string))
             _merge_telemetry(technique_counts, result.technique_counts)
+            difficulty_counts[result.difficulty] = difficulty_counts.get(result.difficulty, 0) + 1
             if show_steps and result.steps:
                 _print_file_steps(line_number, result, max_steps)
             _maybe_print_progress(total, solved, stalled, invalid)
@@ -135,6 +139,7 @@ def _run_puzzle_file(
         invalid += 1
         failures.append((line_number, "invalid", result.message, result.grid_string))
         _merge_telemetry(technique_counts, result.technique_counts)
+        difficulty_counts[result.difficulty] = difficulty_counts.get(result.difficulty, 0) + 1
         if show_steps and result.steps:
             _print_file_steps(line_number, result, max_steps)
         _maybe_print_progress(total, solved, stalled, invalid)
@@ -147,6 +152,15 @@ def _run_puzzle_file(
     print(f"solved: {solved}")
     print(f"stalled: {stalled}")
     print(f"invalid: {invalid}")
+    print("difficulty:")
+    for difficulty in (
+        DifficultyRating.EASY,
+        DifficultyRating.MEDIUM,
+        DifficultyRating.HARD,
+        DifficultyRating.EXPERT,
+        DifficultyRating.UNSOLVED,
+    ):
+        print(f"- {difficulty.value}: {difficulty_counts.get(difficulty, 0)}")
     if stopped_early:
         print(f"stopped_early: reached max_failures={max_failures}")
     if show_telemetry:
