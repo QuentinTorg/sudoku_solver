@@ -61,6 +61,22 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+## Pre-commit Hooks
+
+Install and enable local hooks:
+
+```bash
+pip install -e .[dev]
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+Run hooks across the repo:
+
+```bash
+pre-commit run --all-files
+```
+
 ## Usage
 
 ### Python API (planned)
