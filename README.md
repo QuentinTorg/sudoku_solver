@@ -24,7 +24,17 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   5. Hidden Pair
   6. Naked Triple
   7. Hidden Triple
-  8. XYZ-Wing
+  8. XY-Wing
+  9. XYZ-Wing
+  10. X-Wing
+  11. W-Wing
+  12. Two-String Kite
+  13. Skyscraper
+  14. Unique Rectangle
+- Default technique order:
+  Core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, and `w_wing` run by default.
+  `two_string_kite`, `skyscraper`, and `unique_rectangle` are implemented and can be
+  enabled through the API `techniques=[...]` list.
 - Fallback search:
   Uniqueness-aware backtracking is available when no configured technique can advance the grid.
   It is disabled by default; use `allow_fallback_search=True` (API) or
@@ -233,6 +243,158 @@ Digit `1` is shared by both pincers, so any cell that sees all three (for exampl
 Action:
 Eliminate `1` from common peers of pivot + both pincers (for example from `r4c4`).
 
+### 9. XY-Wing
+Definition:
+A 2-candidate pivot and two 2-candidate pincers force elimination of one shared digit.
+
+Minimal scenario:
+
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  |  |  |  |  |  |
+| r2 |  | `{3,4}` |  |  | `{2,3}` |  |  |  |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  |  |  |  |  |  |  |  |  |
+| r5 |  | `{1,3}` |  |  | `{1,2}` |  |  |  |  |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
+
+Observation:
+Pivot is `r5c5={1,2}`. Pincers `r5c2={1,3}` and `r2c5={2,3}` force digit `3`
+to be false in cells that see both pincers.
+
+Action:
+Eliminate `3` from `r2c2`.
+
+### 10. X-Wing
+Definition:
+For one digit, two rows share the same two candidate columns (or vice versa), so
+that digit can be removed from those columns in other rows.
+
+Minimal scenario (digit `7`):
+
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  |  |  |  |  |  |
+| r2 |  | `{1,7}` |  |  |  |  |  | `{2,7}` |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  | `{7,9}` |  |  |  |  |  |  |  |
+| r5 |  |  |  |  |  |  |  |  |  |
+| r6 |  | `{3,7}` |  |  |  |  |  | `{4,7}` |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  | `{5,7}` |  |
+
+Observation:
+Rows 2 and 6 place digit `7` only in columns 2 and 8.
+
+Action:
+Eliminate `7` from `r4c2` and `r9c8`.
+
+### 11. W-Wing
+Definition:
+Two matching bivalue cells are connected by a strong link on one digit, allowing
+elimination of the other digit from their shared peers.
+
+Minimal scenario:
+
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  |  |  |  |  |  |
+| r2 |  | `{1,9}` |  |  | `{1,4}` |  |  | `{2,9}` |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  |  |  |  |  |  |  |  |  |
+| r5 |  |  |  |  |  |  |  |  |  |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  | `{3,9}` |  |  | `{1,7}` |  |  |  |  |
+| r8 |  |  |  |  |  |  |  | `{1,9}` |  |
+| r9 |  |  |  |  |  |  |  |  |  |
+
+Observation:
+`r2c2` and `r8c8` are both `{1,9}`. A strong link on digit `1` in column 5
+connects peers of those cells.
+
+Action:
+Eliminate `9` from common peers (`r2c8` and `r7c2` in this example).
+
+### 12. Two-String Kite
+Definition:
+A strong row link and a strong column link for the same digit combine through one
+shared box endpoint to eliminate that digit at a crossing cell.
+
+Minimal scenario (digit `5`):
+
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  | `{3,5}` |  |  |  |  |  |  |
+| r2 |  | `{1,5}` |  |  |  |  |  | `{2,5}` |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  |  |  |  |  |  |  |  |  |
+| r5 |  |  |  |  |  |  |  |  |  |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  |  | `{4,5}` |  |  |  |  | `{5,9}` |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
+
+Observation:
+Row 2 and column 3 each give a strong link for digit `5`, and one endpoint pair
+shares box 1.
+
+Action:
+Eliminate `5` from `r7c8`.
+
+### 13. Skyscraper
+Definition:
+Two strong links for one digit share a base; the roof cells force eliminations
+from cells that see both roofs.
+
+Minimal scenario (digit `5`):
+
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  | `{5,8}` |  |  |  |  | `{5,9}` |  |  |
+| r2 |  | `{1,5}` |  |  |  |  |  | `{2,5}` |  |
+| r3 |  |  |  |  |  |  |  |  | `{4,5}` |
+| r4 |  |  |  |  |  |  |  |  |  |
+| r5 |  |  |  |  |  |  |  |  |  |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
+
+Observation:
+Rows 1 and 2 have strong links on digit `5` and share base column 2.
+
+Action:
+Eliminate `5` from `r3c9` (a common peer of the roof cells).
+
+### 14. Unique Rectangle
+Definition:
+If four cells form a deadly two-digit rectangle, extra candidates can be removed
+to keep a unique solution.
+
+Minimal scenario:
+
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 | `{1,2}` |  |  | `{1,2}` |  |  |  |  |  |
+| r2 |  |  |  |  |  |  |  |  |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 | `{1,2}` |  |  | `{1,2,3}` |  |  |  |  |  |
+| r5 |  |  |  |  |  |  |  |  |  |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
+
+Observation:
+Three corners are pure `{1,2}`; the fourth corner has extra candidate `3`.
+
+Action:
+Eliminate `3` from `r4c4`.
+
 ## Result Model
 
 `solve_from_string()` returns a `SolveResult` with:
@@ -271,6 +433,25 @@ from sudoku_solver import solve_from_string
 puzzle = "53..7....6..195....98....6.8...6...34..8..6...2...1.6....28....419..5....8..79"
 result = solve_from_string(puzzle)
 fallback_result = solve_from_string(puzzle, allow_fallback_search=True)
+all_techniques_result = solve_from_string(
+    puzzle,
+    techniques=[
+        "naked_single",
+        "hidden_single",
+        "locked_candidates",
+        "naked_pair",
+        "hidden_pair",
+        "naked_triple",
+        "hidden_triple",
+        "xy_wing",
+        "xyz_wing",
+        "x_wing",
+        "w_wing",
+        "two_string_kite",
+        "skyscraper",
+        "unique_rectangle",
+    ],
+)
 
 print(result.status)
 print(result.difficulty)
@@ -299,6 +480,10 @@ python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 2
 python -m sudoku_solver --puzzle-file puzzles/top1465.txt --allow-fallback-search
 python -m sudoku_solver --puzzle-file puzzles/top1465.txt --show-steps --show-telemetry
 ```
+
+Note:
+CLI uses the default technique order. Custom technique subsets/supersets are currently
+configured through the Python API (`techniques=[...]`).
 
 ### Benchmark Harness
 
