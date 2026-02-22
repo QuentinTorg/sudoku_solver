@@ -18,10 +18,7 @@ SOLVED_GRID = "53467891267219534819834256785976142342685379171392485696153728428
 
 
 def _build_puzzle(blank_positions: set[int]) -> str:
-    return "".join(
-        "." if index in blank_positions else SOLVED_GRID[index]
-        for index in range(81)
-    )
+    return "".join("." if index in blank_positions else SOLVED_GRID[index] for index in range(81))
 
 
 if HYPOTHESIS_AVAILABLE:

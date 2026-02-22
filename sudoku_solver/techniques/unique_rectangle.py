@@ -47,8 +47,7 @@ def apply_unique_rectangle(grid: Grid, candidates: dict[int, set[int]]) -> Step 
 
                 target_corner = corners[extra_indices[0]]
                 eliminations = [
-                    (target_corner, digit)
-                    for digit in sorted(extras[extra_indices[0]])
+                    (target_corner, digit) for digit in sorted(extras[extra_indices[0]])
                 ]
                 if not eliminations:
                     continue

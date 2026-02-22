@@ -134,9 +134,7 @@ class SolverInternalTests(unittest.TestCase):
             placements=[],
             eliminations=[(0, 9)],
         )
-        puzzle = (
-            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
-        )
+        puzzle = "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
         with patch("sudoku_solver.solver.apply_naked_single", return_value=no_change_step):
             result = solve(
                 parse_grid(puzzle),
@@ -153,9 +151,7 @@ class SolverInternalTests(unittest.TestCase):
             placements=[],
             eliminations=[(0, 9)],
         )
-        puzzle = (
-            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
-        )
+        puzzle = "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
         with patch("sudoku_solver.solver.apply_naked_single", return_value=no_change_step):
             result = solve(
                 parse_grid(puzzle),

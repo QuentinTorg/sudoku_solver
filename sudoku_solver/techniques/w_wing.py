@@ -32,9 +32,7 @@ def apply_w_wing(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
                 strong_links.setdefault(digit, []).append((positions[0], positions[1], unit_name))
 
     bivalue_cells = [
-        cell_index
-        for cell_index in sorted(candidates)
-        if len(candidates[cell_index]) == 2
+        cell_index for cell_index in sorted(candidates) if len(candidates[cell_index]) == 2
     ]
 
     for first, second in combinations(bivalue_cells, 2):
@@ -48,12 +46,8 @@ def apply_w_wing(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
         for link_digit in sorted(first_digits):
             other_digit = next(iter(first_digits - {link_digit}))
             for link_first, link_second, unit_name in strong_links.get(link_digit, []):
-                aligned = (
-                    link_first in peers(first)
-                    and link_second in peers(second)
-                ) or (
-                    link_second in peers(first)
-                    and link_first in peers(second)
+                aligned = (link_first in peers(first) and link_second in peers(second)) or (
+                    link_second in peers(first) and link_first in peers(second)
                 )
                 if not aligned:
                     continue
