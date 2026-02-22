@@ -14,40 +14,78 @@ from sudoku_solver.types import Grid, SolveResult, SolveStatus, Step
 
 def solve(grid: Grid, *, techniques: list[str] | None = None) -> SolveResult:
     """Solve a Sudoku grid using configured human techniques."""
-    _ = techniques  # Extension point for custom ordering in later iterations.
-    grid_string = format_grid(grid)
+    technique_order = _resolve_techniques(techniques)
+    cells = list(grid.cells)
+    steps: list[Step] = []
 
-    if 0 not in grid.cells:
+    if 0 not in cells:
+        solved_grid = Grid(cells=tuple(cells))
         return SolveResult(
             status=SolveStatus.SOLVED,
-            grid=grid,
-            grid_string=grid_string,
+            grid=solved_grid,
+            grid_string=format_grid(solved_grid),
             steps=[],
             message="Puzzle is already solved.",
         )
 
-    candidates = get_candidates(grid)
-    if any(len(options) == 0 for options in candidates.values()):
-        return SolveResult(
-            status=SolveStatus.INVALID,
-            grid=grid,
-            grid_string=grid_string,
-            steps=[],
-            message="At least one unsolved cell has no valid candidates.",
-        )
+    candidates = get_candidates(Grid(cells=tuple(cells)))
+    while True:
+        current_grid = Grid(cells=tuple(cells))
+        candidates = _normalize_candidates(current_grid, candidates)
+        contradiction = _find_contradiction(cells, candidates)
+        if contradiction is not None:
+            return SolveResult(
+                status=SolveStatus.INVALID,
+                grid=current_grid,
+                grid_string=format_grid(current_grid),
+                steps=steps,
+                message=contradiction,
+            )
 
-    step = _first_applicable_step(grid, candidates)
-    steps: list[Step] = []
-    if step is not None:
-        steps.append(step)
+        if 0 not in cells:
+            solved_grid = Grid(cells=tuple(cells))
+            return SolveResult(
+                status=SolveStatus.SOLVED,
+                grid=solved_grid,
+                grid_string=format_grid(solved_grid),
+                steps=steps,
+                message="Puzzle solved with configured techniques.",
+            )
 
-    return SolveResult(
-        status=SolveStatus.STALLED,
-        grid=grid,
-        grid_string=grid_string,
-        steps=steps,
-        message="No further v1 moves were applied.",
-    )
+        progress = False
+        for technique in technique_order:
+            step = technique(current_grid, candidates)
+            if step is None:
+                continue
+
+            changed, error = _apply_step(cells, candidates, step)
+            if error is not None:
+                invalid_grid = Grid(cells=tuple(cells))
+                return SolveResult(
+                    status=SolveStatus.INVALID,
+                    grid=invalid_grid,
+                    grid_string=format_grid(invalid_grid),
+                    steps=steps,
+                    message=error,
+                )
+            if not changed:
+                continue
+
+            updated_grid = Grid(cells=tuple(cells))
+            step.grid_snapshot_after = format_grid(updated_grid)
+            steps.append(step)
+            progress = True
+            break
+
+        if not progress:
+            stalled_grid = Grid(cells=tuple(cells))
+            return SolveResult(
+                status=SolveStatus.STALLED,
+                grid=stalled_grid,
+                grid_string=format_grid(stalled_grid),
+                steps=steps,
+                message="No further v1 moves were applied.",
+            )
 
 
 def solve_from_string(puzzle: str, *, techniques: list[str] | None = None) -> SolveResult:
@@ -56,15 +94,89 @@ def solve_from_string(puzzle: str, *, techniques: list[str] | None = None) -> So
     return solve(grid, techniques=techniques)
 
 
-def _first_applicable_step(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
-    for technique in (
+def _resolve_techniques(
+    techniques: list[str] | None,
+) -> tuple:
+    available = {
+        "naked_single": apply_naked_single,
+        "hidden_single": apply_hidden_single,
+        "locked_candidates": apply_locked_candidates,
+        "naked_pair": apply_naked_pair,
+        "hidden_pair": apply_hidden_pair,
+    }
+    default_order = (
         apply_naked_single,
         apply_hidden_single,
         apply_locked_candidates,
         apply_naked_pair,
         apply_hidden_pair,
-    ):
-        step = technique(grid, candidates)
-        if step is not None:
-            return step
+    )
+
+    if techniques is None:
+        return default_order
+
+    resolved = []
+    for name in techniques:
+        if name not in available:
+            msg = f"Unknown technique: {name}"
+            raise ValueError(msg)
+        resolved.append(available[name])
+    return tuple(resolved)
+
+
+def _normalize_candidates(grid: Grid, candidates: dict[int, set[int]]) -> dict[int, set[int]]:
+    base_candidates = get_candidates(grid)
+    normalized: dict[int, set[int]] = {}
+
+    for cell_index, base_options in base_candidates.items():
+        retained_options = candidates.get(cell_index, set(base_options))
+        normalized[cell_index] = set(base_options) & set(retained_options)
+
+    return normalized
+
+
+def _find_contradiction(cells: list[int], candidates: dict[int, set[int]]) -> str | None:
+    for index, value in enumerate(cells):
+        if value != 0:
+            continue
+        if index not in candidates or len(candidates[index]) == 0:
+            return f"Cell {index} has no valid candidates."
     return None
+
+
+def _apply_step(cells: list[int], candidates: dict[int, set[int]], step: Step) -> tuple[bool, str | None]:
+    changed = False
+
+    for cell_index, digit in step.placements:
+        if not 0 <= cell_index < 81:
+            return False, f"Invalid placement index: {cell_index}"
+        if not 1 <= digit <= 9:
+            return False, f"Invalid placement digit: {digit}"
+
+        current_value = cells[cell_index]
+        if current_value not in (0, digit):
+            return False, f"Conflicting placement at cell {cell_index}."
+        if current_value == 0 and digit not in candidates.get(cell_index, set()):
+            return False, f"Placement digit {digit} is not valid for cell {cell_index}."
+        if current_value == 0:
+            cells[cell_index] = digit
+            changed = True
+
+    for cell_index, digit in step.eliminations:
+        if not 0 <= cell_index < 81:
+            return False, f"Invalid elimination index: {cell_index}"
+        if not 1 <= digit <= 9:
+            return False, f"Invalid elimination digit: {digit}"
+        if cells[cell_index] != 0:
+            continue
+
+        options = candidates.setdefault(cell_index, set(range(1, 10)))
+        if digit in options:
+            options.remove(digit)
+            changed = True
+
+    for index, value in enumerate(cells):
+        if value != 0 and index in candidates:
+            del candidates[index]
+
+    return changed, None
