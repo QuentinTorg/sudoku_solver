@@ -6,6 +6,8 @@ from pathlib import Path
 from sudoku_solver.solver import solve_from_string
 from sudoku_solver.types import SolveStatus
 
+PROGRESS_INTERVAL = 1000
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser."""
@@ -99,10 +101,12 @@ def _run_puzzle_file(
         except ValueError as exc:
             invalid += 1
             failures.append((line_number, "invalid", str(exc), None))
+            _maybe_print_progress(total, solved, stalled, invalid)
             continue
 
         if result.status is SolveStatus.SOLVED:
             solved += 1
+            _maybe_print_progress(total, solved, stalled, invalid)
             continue
 
         if result.status is SolveStatus.STALLED:
@@ -110,6 +114,7 @@ def _run_puzzle_file(
             failures.append((line_number, "stalled", result.message, result.grid_string))
             if show_steps and result.steps:
                 _print_file_steps(line_number, result, max_steps)
+            _maybe_print_progress(total, solved, stalled, invalid)
             if max_failures is not None and len(failures) >= max_failures:
                 stopped_early = True
                 break
@@ -119,6 +124,7 @@ def _run_puzzle_file(
         failures.append((line_number, "invalid", result.message, result.grid_string))
         if show_steps and result.steps:
             _print_file_steps(line_number, result, max_steps)
+        _maybe_print_progress(total, solved, stalled, invalid)
         if max_failures is not None and len(failures) >= max_failures:
             stopped_early = True
             break
@@ -149,3 +155,12 @@ def _print_file_steps(line_number: int, result, max_steps: int | None) -> None:
             f"- {step.technique.value} "
             f"placements={step.placements} eliminations={step.eliminations}"
         )
+
+
+def _maybe_print_progress(total: int, solved: int, stalled: int, invalid: int) -> None:
+    if total % PROGRESS_INTERVAL != 0:
+        return
+    print(
+        f"progress: processed={total} solved={solved} stalled={stalled} invalid={invalid}",
+        flush=True,
+    )

@@ -71,6 +71,20 @@ class CliTests(unittest.TestCase):
             self.assertIn("steps line 1:", output)
             self.assertIn("- naked_single placements=[(8, 9)] eliminations=[]", output)
 
+    def test_main_prints_progress_every_1000_processed(self) -> None:
+        solved = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+        with NamedTemporaryFile("w+", encoding="utf-8", delete=True) as tmp:
+            tmp.write((solved + "\n") * 1000)
+            tmp.flush()
+
+            with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+                code = main(["--puzzle-file", tmp.name])
+
+            output = mock_stdout.getvalue()
+            self.assertEqual(code, 0)
+            self.assertIn("progress: processed=1000 solved=1000 stalled=0 invalid=0", output)
+            self.assertIn("total: 1000", output)
+
 
 if __name__ == "__main__":
     unittest.main()
