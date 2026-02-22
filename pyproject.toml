@@ -13,6 +13,7 @@ dependencies = []
 [project.optional-dependencies]
 dev = [
   "coverage>=7.0",
+  "hypothesis>=6.112",
   "mypy>=1.11",
   "pre-commit>=3.7",
   "pytest>=8.0",
