@@ -18,6 +18,10 @@ dev = [
   "ruff>=0.6.0",
 ]
 
+[tool.setuptools.packages.find]
+include = ["sudoku_solver*"]
+exclude = ["tests*", "puzzles*"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 addopts = "-q"
