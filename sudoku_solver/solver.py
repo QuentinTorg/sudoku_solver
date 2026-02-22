@@ -10,6 +10,12 @@ from sudoku_solver.techniques import (
     apply_naked_pair,
     apply_naked_single,
     apply_naked_triple,
+    apply_skyscraper,
+    apply_two_string_kite,
+    apply_unique_rectangle,
+    apply_w_wing,
+    apply_x_wing,
+    apply_xy_wing,
     apply_xyz_wing,
 )
 from sudoku_solver.types import (
@@ -186,7 +192,13 @@ def _resolve_techniques(
         "hidden_pair": apply_hidden_pair,
         "naked_triple": apply_naked_triple,
         "hidden_triple": apply_hidden_triple,
+        "xy_wing": apply_xy_wing,
         "xyz_wing": apply_xyz_wing,
+        "x_wing": apply_x_wing,
+        "unique_rectangle": apply_unique_rectangle,
+        "skyscraper": apply_skyscraper,
+        "two_string_kite": apply_two_string_kite,
+        "w_wing": apply_w_wing,
     }
     default_order = (
         apply_naked_single,
@@ -196,7 +208,13 @@ def _resolve_techniques(
         apply_hidden_pair,
         apply_naked_triple,
         apply_hidden_triple,
+        apply_xy_wing,
         apply_xyz_wing,
+        apply_x_wing,
+        apply_w_wing,
+        apply_two_string_kite,
+        apply_skyscraper,
+        apply_unique_rectangle,
     )
 
     if techniques is None:
@@ -368,6 +386,15 @@ def _classify_difficulty(
     techniques_used = {step.technique for step in steps}
     if TechniqueName.XYZ_WING in techniques_used:
         return DifficultyRating.EXPERT
+    if (
+        TechniqueName.X_WING in techniques_used
+        or TechniqueName.XY_WING in techniques_used
+        or TechniqueName.W_WING in techniques_used
+        or TechniqueName.TWO_STRING_KITE in techniques_used
+        or TechniqueName.SKYSCRAPER in techniques_used
+        or TechniqueName.UNIQUE_RECTANGLE in techniques_used
+    ):
+        return DifficultyRating.HARD
     if (
         TechniqueName.NAKED_TRIPLE in techniques_used
         or TechniqueName.HIDDEN_TRIPLE in techniques_used

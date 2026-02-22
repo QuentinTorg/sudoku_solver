@@ -14,7 +14,13 @@ class TechniqueName(StrEnum):
     HIDDEN_PAIR = "hidden_pair"
     NAKED_TRIPLE = "naked_triple"
     HIDDEN_TRIPLE = "hidden_triple"
+    XY_WING = "xy_wing"
     XYZ_WING = "xyz_wing"
+    X_WING = "x_wing"
+    UNIQUE_RECTANGLE = "unique_rectangle"
+    SKYSCRAPER = "skyscraper"
+    TWO_STRING_KITE = "two_string_kite"
+    W_WING = "w_wing"
 
 
 class SolveStatus(StrEnum):
