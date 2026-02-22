@@ -10,7 +10,7 @@ jobs:
   lint-test-coverage:
     runs-on: ubuntu-latest
     env:
-      COVERAGE_FAIL_UNDER: "85"
+      COVERAGE_FAIL_UNDER: "99"
 
     steps:
       - name: Checkout

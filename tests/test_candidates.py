@@ -2,6 +2,7 @@ import unittest
 
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import parse_grid
+from sudoku_solver.types import Grid
 
 
 class CandidateTests(unittest.TestCase):
@@ -17,6 +18,11 @@ class CandidateTests(unittest.TestCase):
         candidates = get_candidates(grid)
 
         self.assertNotIn(0, candidates)
+
+    def test_get_candidates_rejects_invalid_grid_length(self) -> None:
+        with self.assertRaises(ValueError) as exc:
+            get_candidates(Grid(cells=(0,) * 80))
+        self.assertIn("81", str(exc.exception))
 
 
 if __name__ == "__main__":

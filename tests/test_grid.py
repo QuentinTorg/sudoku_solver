@@ -1,6 +1,7 @@
 import unittest
 
 from sudoku_solver.grid import format_grid, parse_grid
+from sudoku_solver.types import Grid
 
 
 class GridTests(unittest.TestCase):
@@ -19,6 +20,26 @@ class GridTests(unittest.TestCase):
         puzzle = ".....6....59.....82....8....45........3........6..3.54...325..6.................."
         grid = parse_grid(puzzle)
         self.assertEqual(format_grid(grid), puzzle)
+
+    def test_parse_grid_rejects_invalid_character(self) -> None:
+        with self.assertRaises(ValueError) as exc:
+            parse_grid("." * 80 + "x")
+        self.assertIn("Invalid puzzle character", str(exc.exception))
+
+    def test_parse_grid_rejects_conflicting_givens(self) -> None:
+        with self.assertRaises(ValueError) as exc:
+            parse_grid("11" + "." * 79)
+        self.assertIn("conflicting givens", str(exc.exception))
+
+    def test_format_grid_rejects_invalid_grid_length(self) -> None:
+        with self.assertRaises(ValueError) as exc:
+            format_grid(Grid(cells=(0,) * 80))
+        self.assertIn("81", str(exc.exception))
+
+    def test_format_grid_rejects_invalid_cell_value(self) -> None:
+        with self.assertRaises(ValueError) as exc:
+            format_grid(Grid(cells=(10,) + (0,) * 80))
+        self.assertIn("invalid value", str(exc.exception))
 
 
 if __name__ == "__main__":
