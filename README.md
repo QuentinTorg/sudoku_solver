@@ -102,6 +102,15 @@ python -m sudoku_solver --puzzle-file top1465.txt
 python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 2 --show-steps
 ```
 
+### Benchmark Harness
+
+Run batch performance benchmarks over a puzzle corpus:
+
+```bash
+python scripts/benchmark.py puzzles/top1465.txt
+python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --progress-every 500
+```
+
 ## Input Format
 
 - 81-character string
