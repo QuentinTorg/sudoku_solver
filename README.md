@@ -111,6 +111,11 @@ python scripts/benchmark.py puzzles/top1465.txt
 python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --progress-every 500
 ```
 
+## CI
+
+- PR/push CI runs formatter/lint, mypy, unit tests, and branch coverage with a 99% minimum.
+- Nightly/manual CI runs full dataset regression checks on `puzzles/top95.txt` and `puzzles/top1465.txt`, then uploads benchmark artifacts.
+
 ## Input Format
 
 - 81-character string
