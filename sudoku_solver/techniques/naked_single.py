@@ -14,6 +14,7 @@ Expected behavior:
 from sudoku_solver.types import Grid, Step
 from sudoku_solver.grid import format_grid
 from sudoku_solver.types import TechniqueName
+from sudoku_solver.units import cell_label
 
 
 def apply_naked_single(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
@@ -27,14 +28,8 @@ def apply_naked_single(grid: Grid, candidates: dict[int, set[int]]) -> Step | No
             technique=TechniqueName.NAKED_SINGLE,
             placements=[(cell_index, digit)],
             eliminations=[],
-            affected_units=[_unit_label(cell_index)],
+            affected_units=[cell_label(cell_index)],
             rationale=f"Cell {cell_index} has a single candidate: {digit}.",
             grid_snapshot_after=format_grid(grid),
         )
     return None
-
-
-def _unit_label(cell_index: int) -> str:
-    row = cell_index // 9 + 1
-    col = cell_index % 9 + 1
-    return f"r{row}c{col}"

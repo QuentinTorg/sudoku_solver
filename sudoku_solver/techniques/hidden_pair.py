@@ -15,6 +15,7 @@ Expected behavior:
 from sudoku_solver.types import Grid, Step
 from sudoku_solver.grid import format_grid
 from sudoku_solver.types import TechniqueName
+from sudoku_solver.units import all_units
 
 
 def apply_hidden_pair(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
@@ -22,48 +23,40 @@ def apply_hidden_pair(grid: Grid, candidates: dict[int, set[int]]) -> Step | Non
     if not candidates:
         return None
 
-    digit_to_cells: dict[int, set[int]] = {digit: set() for digit in range(1, 10)}
-    for cell_index in sorted(candidates):
-        for digit in sorted(candidates[cell_index]):
-            digit_to_cells[digit].add(cell_index)
-
-    digits = list(range(1, 10))
-    for first_digit in digits:
-        for second_digit in digits:
-            if second_digit <= first_digit:
+    for unit_name, unit_cells in all_units():
+        digit_to_cells: dict[int, set[int]] = {digit: set() for digit in range(1, 10)}
+        for cell_index in unit_cells:
+            if cell_index not in candidates:
                 continue
-            first_cells = digit_to_cells[first_digit]
-            second_cells = digit_to_cells[second_digit]
-            if len(first_cells) == 2 and first_cells == second_cells:
-                sorted_cells = sorted(first_cells)
-                return Step(
-                    technique=TechniqueName.HIDDEN_PAIR,
-                    placements=[],
-                    eliminations=[(sorted_cells[0], second_digit)],
-                    affected_units=[_unit_label(sorted_cells[0]), _unit_label(sorted_cells[1])],
-                    rationale=(
-                        f"Digits {first_digit} and {second_digit} are restricted to "
-                        f"cells {sorted_cells[0]} and {sorted_cells[1]}."
-                    ),
-                    grid_snapshot_after=format_grid(grid),
-                )
+            for digit in candidates[cell_index]:
+                digit_to_cells[digit].add(cell_index)
 
-    cell_index = min(candidates)
-    options = sorted(candidates[cell_index])
-    if len(options) < 2:
-        return None
+        for first_digit in range(1, 10):
+            for second_digit in range(first_digit + 1, 10):
+                first_cells = digit_to_cells[first_digit]
+                second_cells = digit_to_cells[second_digit]
+                if len(first_cells) != 2 or first_cells != second_cells:
+                    continue
 
-    return Step(
-        technique=TechniqueName.HIDDEN_PAIR,
-        placements=[],
-        eliminations=[(cell_index, options[0])],
-        affected_units=[_unit_label(cell_index)],
-        rationale="Hidden-pair placeholder elimination for baseline scaffolding.",
-        grid_snapshot_after=format_grid(grid),
-    )
+                pair_cells = sorted(first_cells)
+                allowed = {first_digit, second_digit}
+                eliminations: list[tuple[int, int]] = []
+                for cell_index in pair_cells:
+                    for digit in sorted(candidates[cell_index]):
+                        if digit not in allowed:
+                            eliminations.append((cell_index, digit))
 
+                if eliminations:
+                    return Step(
+                        technique=TechniqueName.HIDDEN_PAIR,
+                        placements=[],
+                        eliminations=sorted(eliminations),
+                        affected_units=[unit_name],
+                        rationale=(
+                            f"Digits {first_digit} and {second_digit} are restricted to "
+                            f"cells {pair_cells[0]} and {pair_cells[1]} in {unit_name}."
+                        ),
+                        grid_snapshot_after=format_grid(grid),
+                    )
 
-def _unit_label(cell_index: int) -> str:
-    row = cell_index // 9 + 1
-    col = cell_index % 9 + 1
-    return f"r{row}c{col}"
+    return None

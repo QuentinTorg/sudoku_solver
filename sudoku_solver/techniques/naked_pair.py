@@ -14,6 +14,7 @@ Expected behavior:
 from sudoku_solver.types import Grid, Step
 from sudoku_solver.grid import format_grid
 from sudoku_solver.types import TechniqueName
+from sudoku_solver.units import all_units
 
 
 def apply_naked_pair(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
@@ -21,42 +22,38 @@ def apply_naked_pair(grid: Grid, candidates: dict[int, set[int]]) -> Step | None
     if not candidates:
         return None
 
-    pair_to_cells: dict[tuple[int, int], list[int]] = {}
-    for cell_index in sorted(candidates):
-        options = sorted(candidates[cell_index])
-        if len(options) != 2:
-            continue
-        pair = (options[0], options[1])
-        pair_to_cells.setdefault(pair, []).append(cell_index)
+    for unit_name, unit_cells in all_units():
+        pair_to_cells: dict[tuple[int, int], list[int]] = {}
+        for cell_index in unit_cells:
+            if cell_index not in candidates:
+                continue
+            options = sorted(candidates[cell_index])
+            if len(options) != 2:
+                continue
+            pair = (options[0], options[1])
+            pair_to_cells.setdefault(pair, []).append(cell_index)
 
-    for pair, cells in pair_to_cells.items():
-        if len(cells) != 2:
-            continue
-        return Step(
-            technique=TechniqueName.NAKED_PAIR,
-            placements=[],
-            eliminations=[(cells[0], pair[0])],
-            affected_units=[_unit_label(cells[0]), _unit_label(cells[1])],
-            rationale=f"Cells {cells[0]} and {cells[1]} form naked pair {pair}.",
-            grid_snapshot_after=format_grid(grid),
-        )
+        for pair in sorted(pair_to_cells):
+            cells = sorted(pair_to_cells[pair])
+            if len(cells) != 2:
+                continue
 
-    cell_index = min(candidates)
-    options = sorted(candidates[cell_index])
-    if len(options) < 2:
-        return None
+            eliminations: list[tuple[int, int]] = []
+            for cell_index in unit_cells:
+                if cell_index in cells or cell_index not in candidates:
+                    continue
+                for digit in pair:
+                    if digit in candidates[cell_index]:
+                        eliminations.append((cell_index, digit))
 
-    return Step(
-        technique=TechniqueName.NAKED_PAIR,
-        placements=[],
-        eliminations=[(cell_index, options[0])],
-        affected_units=[_unit_label(cell_index)],
-        rationale="Naked-pair placeholder elimination for baseline scaffolding.",
-        grid_snapshot_after=format_grid(grid),
-    )
+            if eliminations:
+                return Step(
+                    technique=TechniqueName.NAKED_PAIR,
+                    placements=[],
+                    eliminations=sorted(eliminations),
+                    affected_units=[unit_name],
+                    rationale=f"Cells {cells[0]} and {cells[1]} form naked pair {pair}.",
+                    grid_snapshot_after=format_grid(grid),
+                )
 
-
-def _unit_label(cell_index: int) -> str:
-    row = cell_index // 9 + 1
-    col = cell_index % 9 + 1
-    return f"r{row}c{col}"
+    return None

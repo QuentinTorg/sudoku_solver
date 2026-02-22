@@ -1,6 +1,7 @@
 """Grid parsing and formatting helpers."""
 
 from sudoku_solver.types import Grid
+from sudoku_solver.units import all_units
 
 
 def parse_grid(puzzle: str) -> Grid:
@@ -46,7 +47,7 @@ def format_grid(grid: Grid) -> str:
 
 def _validate_no_conflicts(cells: list[int]) -> None:
     """Raise ValueError if any row, column, or box has duplicate digits."""
-    for unit in _iter_units():
+    for _, unit in all_units():
         seen: set[int] = set()
         for index in unit:
             value = cells[index]
@@ -56,25 +57,3 @@ def _validate_no_conflicts(cells: list[int]) -> None:
                 msg = "Puzzle has conflicting givens in a unit."
                 raise ValueError(msg)
             seen.add(value)
-
-
-def _iter_units() -> list[list[int]]:
-    units: list[list[int]] = []
-
-    for row in range(9):
-        units.append([row * 9 + col for col in range(9)])
-
-    for col in range(9):
-        units.append([row * 9 + col for row in range(9)])
-
-    for box_row in range(3):
-        for box_col in range(3):
-            base_row = box_row * 3
-            base_col = box_col * 3
-            unit: list[int] = []
-            for dr in range(3):
-                for dc in range(3):
-                    unit.append((base_row + dr) * 9 + (base_col + dc))
-            units.append(unit)
-
-    return units
