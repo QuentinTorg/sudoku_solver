@@ -41,16 +41,25 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
 ## Technique Guide
 
 Technique order is fixed by default and affects which step is chosen first.
+In the example grids below, blank cells are intentionally left empty because they are not relevant to the pattern.
 
 ### 1. Naked Single
 Definition:
 A cell has exactly one remaining candidate, so that digit must be placed.
 
-Minimal scenario:
+Minimal scenario (r4c5 is forced):
 
-| Cell | Candidates |
-| --- | --- |
-| r4c5 | `{7}` |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  | 4 |  |  |  |  |
+| r2 |  |  |  |  | 6 |  |  |  |  |
+| r3 |  |  |  |  | 2 |  |  |  |  |
+| r4 | 8 | 5 | 9 | 1 | `{7}` | 4 | 3 | 2 | 6 |
+| r5 |  |  |  |  | 3 |  |  |  |  |
+| r6 |  |  |  |  | 5 |  |  |  |  |
+| r7 |  |  |  |  | 1 |  |  |  |  |
+| r8 |  |  |  |  | 8 |  |  |  |  |
+| r9 |  |  |  |  | 9 |  |  |  |  |
 
 Action:
 Place `7` at `r4c5`.
@@ -61,11 +70,17 @@ In one unit, a digit appears as a candidate in exactly one cell.
 
 Minimal scenario (row 2):
 
-| Cell | Candidates |
-| --- | --- |
-| r2c1 | `{1,4}` |
-| r2c3 | `{2,4}` |
-| r2c7 | `{3,4}` |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 | 5 |  |  |  |  |  |  |  |  |
+| r2 | `{1,4}` | 8 | `{2,4}` | 6 | 9 | 5 | `{3,4}` | 7 | 2 |
+| r3 | 7 |  |  |  |  |  |  |  |  |
+| r4 | 9 |  |  |  |  |  |  |  |  |
+| r5 | 3 |  |  |  |  |  |  |  |  |
+| r6 | 6 |  |  |  |  |  |  |  |  |
+| r7 | 2 |  |  |  |  |  |  |  |  |
+| r8 | 8 |  |  |  |  |  |  |  |  |
+| r9 | 4 |  |  |  |  |  |  |  |  |
 
 Observation:
 Digit `1` appears only in `r2c1` in this row.
@@ -77,24 +92,22 @@ Place `1` at `r2c1`.
 Definition:
 A digit's candidates are confined to an intersection of units, allowing eliminations in the overlapping unit.
 
-Minimal scenario (pointing from box to row):
+Minimal scenario (pointing from box 1 to row 1):
 
-| Box 1 cell | Has candidate 5? |
-| --- | --- |
-| r1c1 | yes |
-| r1c2 | yes |
-| r2c1 | no |
-| r2c2 | no |
-| r3c1 | no |
-| r3c2 | no |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 | `{2,5}` | `{5,8}` | 1 | `{5,7}` | 6 | 4 | 2 | `{5,9}` | 3 |
+| r2 | `{2,7}` | 9 | 3 |  |  |  |  |  |  |
+| r3 | 4 | `{6,7}` | 8 |  |  |  |  |  |  |
+| r4 |  |  |  |  |  |  |  |  |  |
+| r5 |  |  |  |  |  |  |  |  |  |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
 
 Observation:
 In box 1, candidate `5` appears only on row 1.
-
-| Row 1 outside box 1 | Has candidate 5? |
-| --- | --- |
-| r1c4 | yes |
-| r1c8 | yes |
 
 Action:
 Eliminate `5` from `r1c4` and `r1c8`.
@@ -105,12 +118,17 @@ Two cells in the same unit contain the same two candidates and no others.
 
 Minimal scenario (row 5):
 
-| Cell | Candidates |
-| --- | --- |
-| r5c2 | `{2,8}` |
-| r5c7 | `{2,8}` |
-| r5c4 | `{1,2,9}` |
-| r5c9 | `{3,8}` |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  |  |  |  |  |  |
+| r2 |  |  |  |  |  |  |  |  |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  |  |  |  |  |  |  |  |  |
+| r5 | 4 | `{2,8}` | 6 | `{1,2,9}` | 5 | 7 | `{2,8}` | 1 | `{3,8}` |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
 
 Action:
 Eliminate `2` from `r5c4` and eliminate `8` from `r5c9`.
@@ -121,11 +139,17 @@ Two digits in a unit can appear only in the same two cells, so those two cells m
 
 Minimal scenario (row 6):
 
-| Cell | Candidates |
-| --- | --- |
-| r6c2 | `{1,3,7}` |
-| r6c9 | `{3,6,7}` |
-| other row-6 cells | no `3` and no `7` |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  |  |  |  |  |  |
+| r2 |  |  |  |  |  |  |  |  |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  |  |  |  |  |  |  |  |  |
+| r5 |  |  |  |  |  |  |  |  |  |
+| r6 | 9 | `{1,3,7}` | `{2,4}` | 5 | `{1,8}` | 6 | `{2,8}` | 4 | `{3,6,7}` |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
 
 Observation:
 Digits `3` and `7` are restricted to `r6c2` and `r6c9`.
@@ -139,12 +163,17 @@ Three cells in one unit contain candidates that together are exactly three digit
 
 Minimal scenario (column 4):
 
-| Cell | Candidates |
-| --- | --- |
-| r1c4 | `{1,4}` |
-| r6c4 | `{1,9}` |
-| r8c4 | `{4,9}` |
-| r3c4 | `{2,4,9}` |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  | `{1,4}` |  |  |  |  |  |
+| r2 |  |  |  | 6 |  |  |  |  |  |
+| r3 |  |  |  | `{2,4,9}` |  |  |  |  |  |
+| r4 |  |  |  | 3 |  |  |  |  |  |
+| r5 |  |  |  | 8 |  |  |  |  |  |
+| r6 |  |  |  | `{1,9}` |  |  |  |  |  |
+| r7 |  |  |  | 5 |  |  |  |  |  |
+| r8 |  |  |  | `{4,9}` |  |  |  |  |  |
+| r9 |  |  |  | 7 |  |  |  |  |  |
 
 Observation:
 The triple cells must take digits `1`, `4`, and `9` in some order.
@@ -158,12 +187,17 @@ Three digits in a unit appear only in the same three cells (even if those cells 
 
 Minimal scenario (box 5):
 
-| Cell | Candidates |
-| --- | --- |
-| r4c4 | `{1,2,5,8}` |
-| r5c5 | `{2,5,7,8}` |
-| r6c6 | `{2,3,5,8}` |
-| other box-5 cells | no `2`, `5`, or `8` |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  |  |  |  |  |  |
+| r2 |  |  |  |  |  |  |  |  |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  |  |  | `{1,2,5,8}` | 6 | `{1,4}` |  |  |  |
+| r5 |  |  |  | 9 | `{2,5,7,8}` | 3 |  |  |  |
+| r6 |  |  |  | `{1,7}` | 4 | `{2,3,5,8}` |  |  |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
 
 Action:
 Reduce the three cells to subsets of `{2,5,8}` only.
@@ -174,17 +208,24 @@ A 3-candidate pivot and two 2-candidate pincers force a shared digit that can be
 
 Minimal scenario:
 
-| Role | Cell | Candidates |
-| --- | --- | --- |
-| Pivot | r5c5 | `{1,2,3}` |
-| Pincer A | r5c2 | `{1,2}` |
-| Pincer B | r2c5 | `{1,3}` |
+|   | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| r1 |  |  |  |  |  |  |  |  |  |
+| r2 |  |  |  |  |  |  |  |  |  |
+| r3 |  |  |  |  |  |  |  |  |  |
+| r4 |  |  |  | `{1,6}` | `{1,3}` | 8 |  |  |  |
+| r5 |  |  |  | `{1,2}` | `{1,2,3}` | 7 |  |  |  |
+| r6 |  |  |  |  |  |  |  |  |  |
+| r7 |  |  |  |  |  |  |  |  |  |
+| r8 |  |  |  |  |  |  |  |  |  |
+| r9 |  |  |  |  |  |  |  |  |  |
 
 Observation:
-`1` is the pincer-shared digit. Any cell that sees all three cannot contain `1`.
+Pivot is `r5c5={1,2,3}`, pincers are `r5c4={1,2}` and `r4c5={1,3}`.
+Digit `1` is shared by both pincers, so any cell that sees all three (for example `r4c4`) cannot keep `1`.
 
 Action:
-Eliminate `1` from common peers of pivot + both pincers.
+Eliminate `1` from common peers of pivot + both pincers (for example from `r4c4`).
 
 ## Result Model
 
