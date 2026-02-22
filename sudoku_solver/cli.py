@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from sudoku_solver.solver import solve_from_string
-from sudoku_solver.types import SolveStatus
+from sudoku_solver.types import SolveResult, SolveStatus
 
 PROGRESS_INTERVAL = 1000
 
@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _print_single_result(result) -> None:
+def _print_single_result(result: SolveResult) -> None:
     print(f"status: {result.status.value}")
     print(f"grid: {result.grid_string}")
     if result.message:
@@ -148,7 +148,7 @@ def _run_puzzle_file(
     return 0
 
 
-def _print_file_steps(line_number: int, result, max_steps: int | None) -> None:
+def _print_file_steps(line_number: int, result: SolveResult, max_steps: int | None) -> None:
     print(f"steps line {line_number}:")
     for step in result.steps[:max_steps]:
         print(

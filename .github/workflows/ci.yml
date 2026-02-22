@@ -33,6 +33,9 @@ jobs:
       - name: Ruff Lint
         run: ruff check .
 
+      - name: Mypy
+        run: mypy
+
       - name: Unit Tests
         run: python -m unittest discover -s tests -t . -v
 
