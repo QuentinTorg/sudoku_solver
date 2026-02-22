@@ -1,0 +1,43 @@
+name: Dataset Regression
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  dataset-regression:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Dataset Regression (top95)
+        run: python -m sudoku_solver --puzzle-file puzzles/top95.txt --max-failures 1
+
+      - name: Dataset Regression (top1465)
+        run: python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 1
+
+      - name: Benchmark top1465
+        run: |
+          python scripts/benchmark.py puzzles/top1465.txt --progress-every 0 --top-slowest 15 | tee benchmark_top1465.txt
+
+      - name: Upload Benchmark Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-top1465
+          path: benchmark_top1465.txt

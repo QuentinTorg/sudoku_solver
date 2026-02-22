@@ -1,5 +1,9 @@
 # sudoku_solver
 
+[![CI](https://img.shields.io/github/actions/workflow/status/QuentinTorg/sudoku_solver/ci.yml?branch=main&label=ci)](https://github.com/QuentinTorg/sudoku_solver/actions/workflows/ci.yml)
+[![Dataset Regression](https://img.shields.io/github/actions/workflow/status/QuentinTorg/sudoku_solver/dataset.yml?branch=main&label=dataset)](https://github.com/QuentinTorg/sudoku_solver/actions/workflows/dataset.yml)
+[![Coverage Gate](https://img.shields.io/badge/coverage-%E2%89%A599%25-brightgreen)](https://github.com/QuentinTorg/sudoku_solver/actions/workflows/ci.yml)
+
 Explainable Sudoku solver in Python with human-style techniques, step-by-step reasoning, CLI and library APIs, benchmarking tools, and CI quality gates.
 
 ## What This Project Does
@@ -348,13 +352,13 @@ python -m coverage report -m
 
 ## CI
 
-- PR/push CI runs:
+- `CI` workflow (`.github/workflows/ci.yml`) runs on pull requests and pushes to `main`:
   - Ruff format check
   - Ruff lint
   - Mypy type checking
   - Unit tests
   - Branch coverage gate (minimum 99%)
-- Scheduled/manual CI additionally runs:
+- `Dataset Regression` workflow (`.github/workflows/dataset.yml`) runs on pushes to `main` and manual dispatch:
   - Dataset regression on `puzzles/top95.txt` and `puzzles/top1465.txt`
   - Benchmark artifact generation
 
