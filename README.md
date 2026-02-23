@@ -546,7 +546,8 @@ Eliminate `3` from `r4c4`.
   Use near endgame to avoid deadly non-unique patterns.
 - Fireworks (restricted):
   A pivot with row/column conjugate-style links can remove a remote candidate.
-  Current implementation targets a narrow but safe single-digit form.
+  Current implementation includes a conservative compatibility mode and
+  now also handles peer-remote variants.
   Use on expert stalls with strong-link intersections.
 - WXYZ-Wing (expanded):
   Four-cell wing generalization of XYZ-Wing.

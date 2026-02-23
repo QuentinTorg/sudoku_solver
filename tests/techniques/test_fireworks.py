@@ -38,6 +38,23 @@ class FireworksTechniqueTests(unittest.TestCase):
         step = apply_fireworks(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_fireworks_supports_peer_remotes_via_conservative_mode(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            40: {2, 5},  # pivot r5c5
+            41: {5, 7},  # row remote r5c6
+            31: {5, 8},  # col remote r4c5 (peer with row remote)
+            32: {5, 9},  # sees pivot and remotes
+            33: {1, 5},  # keep row-4 from being conjugate around pivot 31
+        }
+
+        step = apply_fireworks(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "fireworks")
+        self.assertEqual(step.eliminations, [(32, 5)])
+
 
 if __name__ == "__main__":
     unittest.main()

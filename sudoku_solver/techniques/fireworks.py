@@ -14,7 +14,7 @@ from sudoku_solver.units import col_cells, peers, row_cells
 
 
 def apply_fireworks(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
-    """Apply restricted fireworks elimination, else return None."""
+    """Apply expanded-but-safe fireworks elimination, else return None."""
     if not candidates:
         return None
 
@@ -43,26 +43,32 @@ def apply_fireworks(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
 
             row_remote = next(cell_index for cell_index in row_positions if cell_index != pivot)
             col_remote = next(cell_index for cell_index in col_positions if cell_index != pivot)
-            if col_remote in peers(row_remote):
-                # Keep restricted pattern to non-peer remotes.
-                continue
 
-            eliminations = [
+            legacy_eliminations = [
                 (cell_index, digit)
                 for cell_index in sorted(peers(row_remote) & peers(col_remote))
                 if cell_index not in {pivot, row_remote, col_remote}
                 and cell_index in candidates
                 and digit in candidates[cell_index]
             ]
+            conservative_eliminations = [
+                (cell_index, digit)
+                for cell_index, options in sorted(candidates.items())
+                if cell_index not in {pivot, row_remote, col_remote}
+                and digit in options
+                and cell_index in peers(pivot)
+                and (cell_index in peers(row_remote) or cell_index in peers(col_remote))
+            ]
+            eliminations = sorted(set(legacy_eliminations + conservative_eliminations))
             if eliminations:
                 return Step(
                     technique=TechniqueName.FIREWORKS,
                     placements=[],
-                    eliminations=sorted(eliminations),
+                    eliminations=eliminations,
                     affected_units=[f"row{pivot_row + 1}", f"col{pivot_col + 1}"],
                     rationale=(
                         f"Fireworks pivot {pivot} with digit {digit} "
-                        f"eliminates from shared remote peers."
+                        f"eliminates from compatible remote-peer interactions."
                     ),
                     grid_snapshot_after=format_grid(grid),
                 )
