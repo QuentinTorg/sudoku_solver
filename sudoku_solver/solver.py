@@ -3,6 +3,7 @@
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
 from sudoku_solver.techniques import (
+    apply_aic,
     apply_als_xz,
     apply_bug_plus_one,
     apply_empty_rectangle,
@@ -23,6 +24,7 @@ from sudoku_solver.techniques import (
     apply_skyscraper,
     apply_sue_de_coq,
     apply_swordfish,
+    apply_three_d_medusa,
     apply_two_string_kite,
     apply_unique_rectangle,
     apply_w_wing,
@@ -57,6 +59,8 @@ _HIGH_RISK_TECHNIQUES = {
     TechniqueName.XY_CHAIN,
     TechniqueName.ALS_XZ,
     TechniqueName.SUE_DE_COQ,
+    TechniqueName.THREE_D_MEDUSA,
+    TechniqueName.AIC,
 }
 
 
@@ -244,6 +248,8 @@ def _resolve_techniques(
         "als_xz": apply_als_xz,
         "sue_de_coq": apply_sue_de_coq,
         "bug_plus_one": apply_bug_plus_one,
+        "three_d_medusa": apply_three_d_medusa,
+        "aic": apply_aic,
         "empty_rectangle": apply_empty_rectangle,
         "remote_pairs": apply_remote_pairs,
         "unique_rectangle": apply_unique_rectangle,
@@ -269,6 +275,8 @@ def _resolve_techniques(
         apply_jellyfish,
         apply_bug_plus_one,
         apply_simple_coloring,
+        apply_three_d_medusa,
+        apply_aic,
         apply_x_cycles,
         apply_xy_chain,
     )
@@ -507,6 +515,8 @@ def _classify_difficulty(
         or TechniqueName.FINNED_SWORDFISH in techniques_used
         or TechniqueName.FINNED_X_WING in techniques_used
         or TechniqueName.SIMPLE_COLORING in techniques_used
+        or TechniqueName.THREE_D_MEDUSA in techniques_used
+        or TechniqueName.AIC in techniques_used
         or TechniqueName.X_CYCLES in techniques_used
         or TechniqueName.XY_CHAIN in techniques_used
         or TechniqueName.ALS_XZ in techniques_used

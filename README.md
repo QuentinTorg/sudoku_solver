@@ -33,22 +33,25 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   14. Swordfish
   15. Jellyfish
   16. Simple Coloring
-  17. X-Cycles
-  18. XY-Chain
-  19. ALS-XZ (restricted)
-  20. Sue de Coq (restricted)
-  21. BUG+1
-  22. Finned X-Wing / Sashimi X-Wing
-  23. Finned Swordfish
-  24. Empty Rectangle
-  25. Remote Pairs
-  26. Two-String Kite
-  27. Skyscraper
-  28. Unique Rectangle
+  17. 3D Medusa (restricted)
+  18. AIC (restricted)
+  19. X-Cycles
+  20. XY-Chain
+  21. ALS-XZ (restricted)
+  22. Sue de Coq (restricted)
+  23. BUG+1
+  24. Finned X-Wing / Sashimi X-Wing
+  25. Finned Swordfish
+  26. Empty Rectangle
+  27. Remote Pairs
+  28. Two-String Kite
+  29. Skyscraper
+  30. Unique Rectangle
 - Default technique order:
   Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
   `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
-  `simple_coloring`, `x_cycles`, and `xy_chain` run by default.
+  `simple_coloring`, `three_d_medusa`, `aic`, `x_cycles`, and `xy_chain`
+  run by default.
   More expensive techniques (`als_xz`, `sue_de_coq`, `finned_x_wing`,
   `finned_swordfish`, `empty_rectangle`, `remote_pairs`, `two_string_kite`,
   `skyscraper`, `unique_rectangle`) are available through API
@@ -455,6 +458,15 @@ Eliminate `3` from `r4c4`.
   A single digit is colored across strong links with two alternating colors.
   Color-wrap and color-trap conditions produce candidate eliminations.
   Use after fish/wing techniques when single-digit chains are present.
+- 3D Medusa (restricted):
+  Candidate nodes are two-colored using strong links across cells and units.
+  Color contradictions and color-trap interactions remove impossible candidates.
+  Use on very hard stalled puzzles with dense conjugate/bivalue structure.
+- AIC (restricted):
+  Alternating strong/weak links form inference chains across candidates.
+  When chain endpoints force a shared digit relation, common-peer eliminations
+  become possible.
+  Use on expert-level stalled states after simpler chain techniques.
 - X-Cycles:
   Alternating inference loops for one digit create cycle-based contradictions.
   Those contradictions force eliminations for that digit.
@@ -540,6 +552,8 @@ all_techniques_result = solve_from_string(
         "swordfish",
         "jellyfish",
         "simple_coloring",
+        "three_d_medusa",
+        "aic",
         "x_cycles",
         "xy_chain",
         "als_xz",

@@ -1,5 +1,6 @@
 """Technique function exports."""
 
+from sudoku_solver.techniques.aic import apply_aic
 from sudoku_solver.techniques.als_xz import apply_als_xz
 from sudoku_solver.techniques.bug_plus_one import apply_bug_plus_one
 from sudoku_solver.techniques.empty_rectangle import apply_empty_rectangle
@@ -20,6 +21,7 @@ from sudoku_solver.techniques.simple_coloring import apply_simple_coloring
 from sudoku_solver.techniques.skyscraper import apply_skyscraper
 from sudoku_solver.techniques.sue_de_coq import apply_sue_de_coq
 from sudoku_solver.techniques.swordfish import apply_swordfish
+from sudoku_solver.techniques.three_d_medusa import apply_three_d_medusa
 from sudoku_solver.techniques.two_string_kite import apply_two_string_kite
 from sudoku_solver.techniques.unique_rectangle import apply_unique_rectangle
 from sudoku_solver.techniques.w_wing import apply_w_wing
@@ -31,6 +33,7 @@ from sudoku_solver.techniques.xyz_wing import apply_xyz_wing
 
 __all__ = [
     "apply_als_xz",
+    "apply_aic",
     "apply_bug_plus_one",
     "apply_empty_rectangle",
     "apply_finned_swordfish",
@@ -50,6 +53,7 @@ __all__ = [
     "apply_simple_coloring",
     "apply_swordfish",
     "apply_sue_de_coq",
+    "apply_three_d_medusa",
     "apply_two_string_kite",
     "apply_unique_rectangle",
     "apply_w_wing",
