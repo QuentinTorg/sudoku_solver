@@ -36,6 +36,27 @@ class FrankenMutantFishTechniqueTests(unittest.TestCase):
         step = apply_franken_mutant_fish(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_franken_mutant_fish_supports_size_three_patterns(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 7},
+            1: {2, 7},
+            10: {3, 7},
+            11: {4, 7},
+            18: {5, 7},
+            20: {6, 7},
+            27: {7, 8},
+            28: {7, 9},
+        }
+
+        step = apply_franken_mutant_fish(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "franken_mutant_fish")
+        self.assertIn((27, 7), step.eliminations)
+        self.assertIn((28, 7), step.eliminations)
+
 
 if __name__ == "__main__":
     unittest.main()

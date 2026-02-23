@@ -36,6 +36,24 @@ class KrakenFishTechniqueTests(unittest.TestCase):
         step = apply_kraken_fish(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_kraken_fish_supports_finned_fish_compatibility(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            10: {1, 4},
+            13: {2, 4},
+            11: {3, 4},
+            37: {5, 4},
+            40: {6, 4},
+            19: {4, 9},
+        }
+
+        step = apply_kraken_fish(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "kraken_fish")
+        self.assertEqual(step.eliminations, [(19, 4)])
+
 
 if __name__ == "__main__":
     unittest.main()

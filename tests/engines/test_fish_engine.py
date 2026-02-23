@@ -87,6 +87,25 @@ class FishEngineTests(unittest.TestCase):
         assert fish is not None
         self.assertEqual(fish.eliminations, ((57, 7), (58, 7)))
 
+    def test_find_franken_mutant_fish_elimination_supports_size_three(self) -> None:
+        candidates = {
+            0: {1, 7},
+            1: {2, 7},
+            10: {3, 7},
+            11: {4, 7},
+            18: {5, 7},
+            20: {6, 7},
+            27: {7, 8},
+            28: {7, 9},
+        }
+
+        fish = find_franken_mutant_fish_elimination(candidates, 7)
+
+        self.assertIsNotNone(fish)
+        assert fish is not None
+        self.assertIn((27, 7), fish.eliminations)
+        self.assertIn((28, 7), fish.eliminations)
+
     def test_find_standard_fish_elimination_supports_column_orientation(self) -> None:
         candidates = {
             1: {2, 7},

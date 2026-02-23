@@ -448,11 +448,25 @@ def find_franken_mutant_fish_elimination(
     candidates: dict[int, set[int]],
     digit: int,
 ) -> FishElimination | None:
-    """Find a restricted franken/mutant fish elimination for one digit."""
-    row_oriented = _find_franken_orientation(candidates, digit, orientation="row")
-    if row_oriented is not None:
-        return row_oriented
-    return _find_franken_orientation(candidates, digit, orientation="col")
+    """Find an expanded franken/mutant fish elimination for one digit."""
+    for size in (3, 2):
+        row_oriented = _find_franken_orientation(
+            candidates,
+            digit,
+            orientation="row",
+            size=size,
+        )
+        if row_oriented is not None:
+            return row_oriented
+        col_oriented = _find_franken_orientation(
+            candidates,
+            digit,
+            orientation="col",
+            size=size,
+        )
+        if col_oriented is not None:
+            return col_oriented
+    return None
 
 
 def _find_franken_orientation(
@@ -460,41 +474,50 @@ def _find_franken_orientation(
     digit: int,
     *,
     orientation: str,
+    size: int,
 ) -> FishElimination | None:
-    bases = _collect_franken_bases(candidates, digit, orientation=orientation)
-    for first_base, second_base in combinations(bases, 2):
-        if "box" not in {first_base.kind, second_base.kind}:
+    bases = _collect_franken_bases(
+        candidates,
+        digit,
+        orientation=orientation,
+        max_cover_size=size,
+    )
+    for base_group in combinations(bases, size):
+        kinds = {base.kind for base in base_group}
+        if "box" not in kinds:
+            continue
+        if orientation == "row" and "row" not in kinds:
+            continue
+        if orientation == "col" and "col" not in kinds:
             continue
 
-        cover_union = set(first_base.covers | second_base.covers)
-        if len(cover_union) != 2:
+        cover_union = set().union(*(base.covers for base in base_group))
+        if len(cover_union) != size:
             continue
-        sorted_cover = sorted(cover_union)
-        cover_pair = (sorted_cover[0], sorted_cover[1])
+        cover_lines = tuple(sorted(cover_union))
 
-        protected = set(first_base.protected_cells | second_base.protected_cells)
+        protected = set().union(*(set(base.protected_cells) for base in base_group))
         eliminations = _franken_eliminations(
             candidates,
             digit,
             orientation=orientation,
-            cover_lines=cover_pair,
+            cover_lines=cover_lines,
             protected_cells=protected,
         )
         if not eliminations:
             continue
 
-        affected_units = (
-            _franken_unit_label(first_base),
-            _franken_unit_label(second_base),
-            f"{'col' if orientation == 'row' else 'row'}{cover_pair[0] + 1}",
-            f"{'col' if orientation == 'row' else 'row'}{cover_pair[1] + 1}",
+        line_prefix = "col" if orientation == "row" else "row"
+        affected_units = tuple(
+            [_franken_unit_label(base) for base in base_group]
+            + [f"{line_prefix}{line + 1}" for line in cover_lines]
         )
         return FishElimination(
             digit=digit,
             eliminations=tuple(sorted(eliminations)),
             affected_units=affected_units,
             orientation=f"franken_{orientation}",
-            base_units=(first_base.index, second_base.index),
+            base_units=tuple(base.index for base in base_group),
         )
 
     return None
@@ -505,6 +528,7 @@ def _collect_franken_bases(
     digit: int,
     *,
     orientation: str,
+    max_cover_size: int,
 ) -> list[_FrankenBaseUnit]:
     bases: list[_FrankenBaseUnit] = []
     if orientation == "row":
@@ -514,7 +538,7 @@ def _collect_franken_bases(
                 for cell_index in row_cells(row)
                 if cell_index in candidates and digit in candidates[cell_index]
             }
-            if 1 <= len(covers) <= 2:
+            if 1 <= len(covers) <= max_cover_size:
                 bases.append(
                     _FrankenBaseUnit(
                         kind="row",
@@ -529,7 +553,7 @@ def _collect_franken_bases(
                 for cell_index in box_cells(box)
                 if cell_index in candidates and digit in candidates[cell_index]
             }
-            if 1 <= len(covers) <= 2:
+            if 1 <= len(covers) <= max_cover_size:
                 bases.append(
                     _FrankenBaseUnit(
                         kind="box",
@@ -546,7 +570,7 @@ def _collect_franken_bases(
             for cell_index in col_cells(col)
             if cell_index in candidates and digit in candidates[cell_index]
         }
-        if 1 <= len(covers) <= 2:
+        if 1 <= len(covers) <= max_cover_size:
             bases.append(
                 _FrankenBaseUnit(
                     kind="col",
@@ -561,7 +585,7 @@ def _collect_franken_bases(
             for cell_index in box_cells(box)
             if cell_index in candidates and digit in candidates[cell_index]
         }
-        if 1 <= len(covers) <= 2:
+        if 1 <= len(covers) <= max_cover_size:
             bases.append(
                 _FrankenBaseUnit(
                     kind="box",
@@ -578,7 +602,7 @@ def _franken_eliminations(
     digit: int,
     *,
     orientation: str,
-    cover_lines: tuple[int, int],
+    cover_lines: tuple[int, ...],
     protected_cells: set[int],
 ) -> list[tuple[int, int]]:
     eliminations: list[tuple[int, int]] = []

@@ -56,11 +56,11 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   37. WXYZ-Wing (expanded)
   38. Exocet (restricted)
   39. Sue de Coq Full/Generalized (restricted)
-  40. Kraken Fish (restricted)
-  41. Sashimi Fish (restricted)
+  40. Kraken Fish (expanded)
+  41. Sashimi Fish (expanded)
   42. Forcing Chains (expanded)
   43. Forcing Nets (expanded)
-  44. Franken/Mutant Fish (restricted)
+  44. Franken/Mutant Fish (expanded)
   45. Squirmbag
 - Default technique set:
   All implemented human techniques run by default.
@@ -567,17 +567,19 @@ Eliminate `3` from `r4c4`.
   Generalizes Sue de Coq beyond the base intersection form.
   Current implementation adds a safe restricted 3-cell intersection mode.
   Use on intersection-heavy hard grids.
-- Kraken Fish (restricted):
+- Kraken Fish (expanded):
   Fish patterns combined with chain logic for deeper eliminations.
-  Current implementation reuses safe fish-compatible eliminations.
+  Expanded implementation scans classic fish plus finned-fish-compatible structures.
   Use late when base fish methods partially apply.
-- Sashimi Fish (restricted):
+- Sashimi Fish (expanded):
   Broader sashimi fish family extending finned fish logic.
-  Current implementation reuses safe finned-fish-compatible eliminations.
+  Expanded implementation uses finned fish first, then sashimi-compatible
+  under-populated base-line fish scans.
   Use on advanced fish-like stalls.
-- Franken/Mutant Fish (restricted):
+- Franken/Mutant Fish (expanded):
   Extends fish base units to include box units mixed with row/column units.
   This can unlock eliminations that pure line-only fish cannot make.
+  Expanded implementation checks both size-2 and size-3 mixed-base structures.
   Use late on fish-heavy expert stalls.
 
 Performance note:
