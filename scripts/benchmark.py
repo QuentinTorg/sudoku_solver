@@ -6,12 +6,20 @@ import argparse
 import csv
 import json
 import statistics
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from sudoku_solver.solver import solve_from_string
-from sudoku_solver.types import SolveStatus
+# Ensure local benchmark runs import solver code from this workspace checkout.
+_WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
+_WORKSPACE_ROOT_STR = str(_WORKSPACE_ROOT)
+if _WORKSPACE_ROOT_STR in sys.path:
+    sys.path.remove(_WORKSPACE_ROOT_STR)
+sys.path.insert(0, _WORKSPACE_ROOT_STR)
+
+from sudoku_solver.solver import solve_from_string  # noqa: E402
+from sudoku_solver.types import SolveStatus  # noqa: E402
 
 
 @dataclass(slots=True)
@@ -26,6 +34,11 @@ class TechniqueProfileEntry:
     calls: int = 0
     hits: int = 0
     elapsed_seconds: float = 0.0
+
+
+def workspace_import_root() -> Path:
+    """Return the workspace path that benchmark import resolution is pinned to."""
+    return _WORKSPACE_ROOT
 
 
 def build_parser() -> argparse.ArgumentParser:

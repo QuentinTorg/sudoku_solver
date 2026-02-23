@@ -1,5 +1,6 @@
 import io
 import json
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -16,6 +17,9 @@ class _DummyResult:
 
 
 class BenchmarkScriptTests(unittest.TestCase):
+    def test_benchmark_pins_workspace_import_root_to_sys_path_front(self) -> None:
+        self.assertEqual(Path(sys.path[0]).resolve(), benchmark.workspace_import_root().resolve())
+
     def test_main_writes_json_csv_and_technique_profile(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)

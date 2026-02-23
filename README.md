@@ -195,6 +195,10 @@ python scripts/benchmark.py puzzles/top1465.txt --output-json benchmark.json --o
 python scripts/check_benchmark_guardrail.py benchmark.json --max-avg-ms 700 --max-p95-ms 2500 --min-throughput 2.5
 ```
 
+Note:
+`scripts/benchmark.py` pins import resolution to the local workspace root, so
+it benchmarks the checked-out solver code without requiring `PYTHONPATH=.`.
+
 ## Input Format
 
 - Exactly 81 characters.
@@ -291,7 +295,7 @@ Notes:
 
 1. [x] Add a CI performance guardrail that checks benchmark metrics against configured thresholds.
 2. [x] Add a technique cost profiler report (call count, hit count, total/runtime averages) during benchmark runs.
-3. Make benchmark execution path usage explicit so local runs always target workspace code.
+3. [x] Make benchmark execution path usage explicit so local runs always target workspace code.
 4. [x] Add machine-readable benchmark outputs (JSON/CSV) for run-to-run comparisons and automation.
 5. Clean up legacy/noise artifacts in the repo (for example stray coverage byproducts).
 6. Add a technique index table in `sudoku_solver/techniques/README.md` (family, complexity tier, status, expected cost).
