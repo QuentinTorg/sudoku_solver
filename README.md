@@ -47,15 +47,28 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   28. Two-String Kite
   29. Skyscraper
   30. Unique Rectangle
+  31. Grouped AIC (restricted)
+  32. Nice Loops (restricted)
+  33. ALS Chains (restricted)
+  34. Death Blossom (restricted)
+  35. Uniqueness Expansions (restricted)
+  36. Fireworks (restricted)
+  37. WXYZ-Wing (restricted)
+  38. Exocet (very restricted)
+  39. Sue de Coq Full/Generalized (restricted)
+  40. Kraken Fish (restricted)
+  41. Sashimi Fish (restricted)
 - Default technique order:
   Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
   `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
   `simple_coloring`, `three_d_medusa`, `aic`, `x_cycles`, and `xy_chain`
   run by default.
-  More expensive techniques (`als_xz`, `sue_de_coq`, `finned_x_wing`,
-  `finned_swordfish`, `empty_rectangle`, `remote_pairs`, `two_string_kite`,
-  `skyscraper`, `unique_rectangle`) are available through API
-  `techniques=[...]` selection.
+  More expensive techniques (`als_xz`, `sue_de_coq`, `grouped_aic`,
+  `nice_loops`, `als_chains`, `death_blossom`, `uniqueness_expansions`,
+  `fireworks`, `wxyz_wing`, `exocet`, `sue_de_coq_full`, `kraken_fish`,
+  `sashimi_fish`, `finned_x_wing`, `finned_swordfish`, `empty_rectangle`,
+  `remote_pairs`, `two_string_kite`, `skyscraper`, `unique_rectangle`) are
+  available through API `techniques=[...]` selection.
 - Advanced-technique safety:
   High-risk eliminations are conservatively validated against solution
   existence checks before they are applied, reducing false-positive
@@ -489,6 +502,50 @@ Eliminate `3` from `r4c4`.
   In a near-BUG state (all bivalue except one tri-value cell), parity reveals
   a forced digit in that exceptional cell.
   Use very late when the grid is almost solved.
+- Grouped AIC (restricted):
+  Extends alternating inference chains with grouped-node style links.
+  The current implementation focuses on safe AIC-compatible reductions.
+  Use for chain-heavy expert stalls.
+- Nice Loops (restricted):
+  Inference loops can force candidates true/false through contradiction logic.
+  The current implementation reuses safe AIC-loop eliminations.
+  Use when shorter chains no longer progress.
+- ALS Chains (restricted):
+  Links multiple almost-locked sets to propagate eliminations across units.
+  The current implementation extends safe ALS-XZ-style reductions.
+  Use in advanced ALS-rich states.
+- Death Blossom (restricted):
+  A stem cell plus two petals can force a shared external candidate false.
+  Useful when petal pairs tie different stem digits to the same outside value.
+  Use on dense bivalue neighborhoods.
+- Uniqueness Expansions (restricted):
+  Additional uniqueness logic beyond baseline unique rectangle.
+  Current implementation includes a restricted UR type-2 style elimination.
+  Use near endgame to avoid deadly non-unique patterns.
+- Fireworks (restricted):
+  A pivot with row/column conjugate-style links can remove a remote candidate.
+  Current implementation targets a narrow but safe single-digit form.
+  Use on expert stalls with strong-link intersections.
+- WXYZ-Wing (restricted):
+  Four-cell wing generalization of XYZ-Wing.
+  A restricted shared candidate can be removed from cells seeing all holders.
+  Use after XY/XYZ/chain techniques.
+- Exocet (very restricted):
+  Structural base/target pattern that constrains two digits to target cells.
+  Current implementation detects a narrow junior-style aligned variant.
+  Use as a specialized late-game pattern.
+- Sue de Coq Full/Generalized (restricted):
+  Generalizes Sue de Coq beyond the base intersection form.
+  Current implementation adds a safe restricted 3-cell intersection mode.
+  Use on intersection-heavy hard grids.
+- Kraken Fish (restricted):
+  Fish patterns combined with chain logic for deeper eliminations.
+  Current implementation reuses safe fish-compatible eliminations.
+  Use late when base fish methods partially apply.
+- Sashimi Fish (restricted):
+  Broader sashimi fish family extending finned fish logic.
+  Current implementation reuses safe finned-fish-compatible eliminations.
+  Use on advanced fish-like stalls.
 
 Performance note:
 The heaviest techniques are intentionally kept out of default order and are
@@ -556,6 +613,17 @@ all_techniques_result = solve_from_string(
         "aic",
         "x_cycles",
         "xy_chain",
+        "grouped_aic",
+        "nice_loops",
+        "als_chains",
+        "death_blossom",
+        "uniqueness_expansions",
+        "fireworks",
+        "wxyz_wing",
+        "exocet",
+        "sue_de_coq_full",
+        "kraken_fish",
+        "sashimi_fish",
         "als_xz",
         "sue_de_coq",
         "bug_plus_one",
