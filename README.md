@@ -58,8 +58,8 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   39. Sue de Coq Full/Generalized (restricted)
   40. Kraken Fish (restricted)
   41. Sashimi Fish (restricted)
-  42. Forcing Chains (restricted)
-  43. Forcing Nets (restricted)
+  42. Forcing Chains (expanded)
+  43. Forcing Nets (expanded)
   44. Franken/Mutant Fish (restricted)
   45. Squirmbag
 - Default technique set:
@@ -526,13 +526,17 @@ Eliminate `3` from `r4c4`.
   The current implementation adds restricted 3-ALS and 4-ALS RCC-chain passes
   and falls back to safe ALS-XZ-style reductions when no chain is found.
   Use in advanced ALS-rich states.
-- Forcing Chains (restricted):
-  Branches on a bivalue pivot candidate and propagates forced singles.
+- Forcing Chains (expanded):
+  Branches on a bivalue pivot candidate and propagates branch consequences.
+  Branch propagation now includes forced singles plus lightweight locked-candidate
+  and naked-pair reductions before contradiction/shared-outcome checks.
   If one branch contradicts or both branches agree on a consequence, that
   placement/elimination is applied.
   Use on expert-level stalls after local chain/fish/ALS rules.
-- Forcing Nets (restricted):
+- Forcing Nets (expanded):
   Generalizes forcing-chain branching to pivots with two to four candidates.
+  Branch propagation now includes forced singles plus lightweight locked-candidate
+  and naked-pair reductions before contradiction/shared-outcome checks.
   If all valid branches agree on a placement/elimination, or all but one
   branch contradict, the shared consequence is applied.
   Use late on expert stalls when shorter chain rules are exhausted.

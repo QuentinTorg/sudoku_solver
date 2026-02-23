@@ -4,7 +4,7 @@ This module centralizes graph construction and chain traversals used by:
 - AIC-family techniques
 - Coloring/X-Cycles techniques
 - XY-Chain neighborhood scans
-- Forcing Chains/Nets branch consequences
+- Forcing Chains/Nets branch consequences with lightweight branch propagation
 """
 
 from collections import deque
@@ -14,7 +14,16 @@ from typing import TypeVar
 
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.types import Grid
-from sudoku_solver.units import all_units, peers
+from sudoku_solver.units import (
+    all_units,
+    box_cells,
+    box_index,
+    col_cells,
+    col_index,
+    peers,
+    row_cells,
+    row_index,
+)
 
 Node = tuple[int, int]  # (cell_index, digit)
 GraphNode = TypeVar("GraphNode", int, Node)
@@ -345,6 +354,7 @@ def find_forcing_chains_consequence(
         return None
 
     allowed = {cell_index: set(options) for cell_index, options in candidates.items()}
+    best: tuple[tuple[int, int, int], ForcingConsequence] | None = None
     for pivot_cell in bivalue_cells(candidates):
         pivot_digits = sorted(candidates[pivot_cell])
         if len(pivot_digits) != 2:
@@ -355,7 +365,7 @@ def find_forcing_chains_consequence(
         second_branch = _propagate_assumption(grid.cells, allowed, pivot_cell, second_digit)
 
         if first_branch.valid and not second_branch.valid:
-            return ForcingConsequence(
+            consequence = ForcingConsequence(
                 pivot_cell=pivot_cell,
                 placements=((pivot_cell, first_digit),),
                 eliminations=(),
@@ -364,8 +374,9 @@ def find_forcing_chains_consequence(
                     f"cell {pivot_cell} must be {first_digit}."
                 ),
             )
+            best = _best_forcing_consequence(best, consequence, rank=3)
         if second_branch.valid and not first_branch.valid:
-            return ForcingConsequence(
+            consequence = ForcingConsequence(
                 pivot_cell=pivot_cell,
                 placements=((pivot_cell, second_digit),),
                 eliminations=(),
@@ -374,6 +385,7 @@ def find_forcing_chains_consequence(
                     f"cell {pivot_cell} must be {second_digit}."
                 ),
             )
+            best = _best_forcing_consequence(best, consequence, rank=3)
         if not first_branch.valid or not second_branch.valid:
             continue
 
@@ -383,7 +395,7 @@ def find_forcing_chains_consequence(
             second_branch.cells,
         )
         if common_placements:
-            return ForcingConsequence(
+            consequence = ForcingConsequence(
                 pivot_cell=pivot_cell,
                 placements=tuple(common_placements),
                 eliminations=(),
@@ -391,6 +403,7 @@ def find_forcing_chains_consequence(
                     f"Both forcing branches from pivot cell {pivot_cell} place the same values."
                 ),
             )
+            best = _best_forcing_consequence(best, consequence, rank=2)
 
         common_eliminations = _common_branch_eliminations(
             candidates,
@@ -399,7 +412,7 @@ def find_forcing_chains_consequence(
             pivot_cell=pivot_cell,
         )
         if common_eliminations:
-            return ForcingConsequence(
+            consequence = ForcingConsequence(
                 pivot_cell=pivot_cell,
                 placements=(),
                 eliminations=tuple(common_eliminations),
@@ -408,8 +421,9 @@ def find_forcing_chains_consequence(
                     "remove the same candidates."
                 ),
             )
+            best = _best_forcing_consequence(best, consequence, rank=1)
 
-    return None
+    return best[1] if best is not None else None
 
 
 def find_forcing_nets_consequence(
@@ -421,6 +435,7 @@ def find_forcing_nets_consequence(
         return None
 
     allowed = {cell_index: set(options) for cell_index, options in candidates.items()}
+    best: tuple[tuple[int, int, int], ForcingConsequence] | None = None
     pivot_cells = [
         cell_index for cell_index in sorted(candidates) if 2 <= len(candidates[cell_index]) <= 4
     ]
@@ -442,7 +457,7 @@ def find_forcing_nets_consequence(
 
         if len(valid_digits) == 1 and invalid_digits:
             forced_digit = valid_digits[0]
-            return ForcingConsequence(
+            consequence = ForcingConsequence(
                 pivot_cell=pivot_cell,
                 placements=((pivot_cell, forced_digit),),
                 eliminations=(),
@@ -451,16 +466,18 @@ def find_forcing_nets_consequence(
                     "contradict; remaining digit is forced."
                 ),
             )
+            best = _best_forcing_consequence(best, consequence, rank=3)
 
         valid_branches = [branch_results[digit] for digit in valid_digits]
         common_placements = _common_placements_for_branches(grid.cells, valid_branches)
         if common_placements:
-            return ForcingConsequence(
+            consequence = ForcingConsequence(
                 pivot_cell=pivot_cell,
                 placements=tuple(common_placements),
                 eliminations=(),
                 reason=(f"Forcing net branches from cell {pivot_cell} agree on placements."),
             )
+            best = _best_forcing_consequence(best, consequence, rank=2)
 
         common_eliminations = _common_eliminations_for_branches(
             candidates,
@@ -468,14 +485,38 @@ def find_forcing_nets_consequence(
             pivot_cell=pivot_cell,
         )
         if common_eliminations:
-            return ForcingConsequence(
+            consequence = ForcingConsequence(
                 pivot_cell=pivot_cell,
                 placements=(),
                 eliminations=tuple(common_eliminations),
                 reason=(f"Forcing net branches from cell {pivot_cell} agree on eliminations."),
             )
+            best = _best_forcing_consequence(best, consequence, rank=1)
 
-    return None
+    return best[1] if best is not None else None
+
+
+def _best_forcing_consequence(
+    current_best: tuple[tuple[int, int, int], ForcingConsequence] | None,
+    consequence: ForcingConsequence,
+    rank: int,
+) -> tuple[tuple[int, int, int], ForcingConsequence]:
+    score = _forcing_consequence_score(consequence, rank=rank)
+    if current_best is None or score > current_best[0]:
+        return (score, consequence)
+    return current_best
+
+
+def _forcing_consequence_score(
+    consequence: ForcingConsequence,
+    *,
+    rank: int,
+) -> tuple[int, int, int]:
+    return (
+        rank,
+        len(consequence.placements),
+        len(consequence.eliminations),
+    )
 
 
 def _propagate_assumption(
@@ -485,6 +526,7 @@ def _propagate_assumption(
     assumed_digit: int,
 ) -> _ForcingBranchResult:
     cells = list(base_cells)
+    allowed = {cell_index: set(options) for cell_index, options in allowed_candidates.items()}
     current = cells[assumed_cell]
     if current not in (0, assumed_digit):
         return _ForcingBranchResult(valid=False, cells=cells, candidates={})
@@ -494,14 +536,20 @@ def _propagate_assumption(
         if _has_duplicate_values(cells):
             return _ForcingBranchResult(valid=False, cells=cells, candidates={})
 
-        branch_candidates = _state_candidates(cells, allowed_candidates)
+        branch_candidates = _state_candidates(cells, allowed)
         if branch_candidates is None:
+            return _ForcingBranchResult(valid=False, cells=cells, candidates={})
+
+        reduced, invalid = _apply_branch_candidate_reductions(branch_candidates, allowed)
+        if invalid:
             return _ForcingBranchResult(valid=False, cells=cells, candidates={})
         if _has_unit_digit_contradiction(cells, branch_candidates):
             return _ForcingBranchResult(valid=False, cells=cells, candidates={})
 
         forced = _forced_single_placements(cells, branch_candidates)
         if not forced:
+            if reduced:
+                continue
             return _ForcingBranchResult(valid=True, cells=cells, candidates=branch_candidates)
 
         changed = False
@@ -515,6 +563,140 @@ def _propagate_assumption(
             changed = True
         if not changed:
             return _ForcingBranchResult(valid=True, cells=cells, candidates=branch_candidates)
+
+
+def _apply_branch_candidate_reductions(
+    candidates: dict[int, set[int]],
+    allowed_candidates: dict[int, set[int]],
+) -> tuple[bool, bool]:
+    """Apply lightweight candidate-only reductions inside one forcing branch."""
+    changed = False
+    while True:
+        eliminations = set(_branch_locked_candidates_eliminations(candidates))
+        eliminations.update(_branch_naked_pair_eliminations(candidates))
+        if not eliminations:
+            return changed, False
+
+        applied = False
+        for cell_index, digit in sorted(eliminations):
+            options = candidates.get(cell_index)
+            if options is None or digit not in options:
+                continue
+            options.remove(digit)
+            allowed_candidates.setdefault(cell_index, set(options) | {digit}).discard(digit)
+            applied = True
+            if len(options) == 0:
+                return True, True
+
+        if not applied:
+            return changed, False
+        changed = True
+
+
+def _branch_locked_candidates_eliminations(
+    candidates: dict[int, set[int]],
+) -> list[tuple[int, int]]:
+    """Find locked-candidate eliminations in a branch candidate state."""
+    eliminations: set[tuple[int, int]] = set()
+
+    for box in range(9):
+        box_unit = box_cells(box)
+        for digit in range(1, 10):
+            positions = [
+                cell_index
+                for cell_index in box_unit
+                if cell_index in candidates and digit in candidates[cell_index]
+            ]
+            if len(positions) < 2:
+                continue
+
+            rows = {row_index(cell_index) for cell_index in positions}
+            if len(rows) == 1:
+                row = next(iter(rows))
+                for cell_index in row_cells(row):
+                    if cell_index in box_unit:
+                        continue
+                    if cell_index in candidates and digit in candidates[cell_index]:
+                        eliminations.add((cell_index, digit))
+
+            cols = {col_index(cell_index) for cell_index in positions}
+            if len(cols) == 1:
+                col = next(iter(cols))
+                for cell_index in col_cells(col):
+                    if cell_index in box_unit:
+                        continue
+                    if cell_index in candidates and digit in candidates[cell_index]:
+                        eliminations.add((cell_index, digit))
+
+    for row in range(9):
+        row_unit = row_cells(row)
+        for digit in range(1, 10):
+            positions = [
+                cell_index
+                for cell_index in row_unit
+                if cell_index in candidates and digit in candidates[cell_index]
+            ]
+            if len(positions) < 2:
+                continue
+            boxes = {box_index(cell_index) for cell_index in positions}
+            if len(boxes) != 1:
+                continue
+            box = next(iter(boxes))
+            for cell_index in box_cells(box):
+                if cell_index in row_unit:
+                    continue
+                if cell_index in candidates and digit in candidates[cell_index]:
+                    eliminations.add((cell_index, digit))
+
+    for col in range(9):
+        col_unit = col_cells(col)
+        for digit in range(1, 10):
+            positions = [
+                cell_index
+                for cell_index in col_unit
+                if cell_index in candidates and digit in candidates[cell_index]
+            ]
+            if len(positions) < 2:
+                continue
+            boxes = {box_index(cell_index) for cell_index in positions}
+            if len(boxes) != 1:
+                continue
+            box = next(iter(boxes))
+            for cell_index in box_cells(box):
+                if cell_index in col_unit:
+                    continue
+                if cell_index in candidates and digit in candidates[cell_index]:
+                    eliminations.add((cell_index, digit))
+
+    return sorted(eliminations)
+
+
+def _branch_naked_pair_eliminations(
+    candidates: dict[int, set[int]],
+) -> list[tuple[int, int]]:
+    """Find naked-pair eliminations in a branch candidate state."""
+    eliminations: set[tuple[int, int]] = set()
+    for _, unit_cells in all_units():
+        pair_to_cells: dict[tuple[int, int], list[int]] = {}
+        for cell_index in unit_cells:
+            options = sorted(candidates.get(cell_index, set()))
+            if len(options) != 2:
+                continue
+            pair = (options[0], options[1])
+            pair_to_cells.setdefault(pair, []).append(cell_index)
+
+        for pair, cells in pair_to_cells.items():
+            if len(cells) != 2:
+                continue
+            pair_cells = set(cells)
+            for cell_index in unit_cells:
+                if cell_index in pair_cells:
+                    continue
+                for digit in pair:
+                    if digit in candidates.get(cell_index, set()):
+                        eliminations.add((cell_index, digit))
+
+    return sorted(eliminations)
 
 
 def _has_duplicate_values(cells: list[int]) -> bool:

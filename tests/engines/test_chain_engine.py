@@ -2,6 +2,10 @@ import unittest
 
 import sudoku_solver.engines.chain_engine as chain_engine
 from sudoku_solver.engines.chain_engine import (
+    _apply_branch_candidate_reductions,
+    _best_forcing_consequence,
+    _branch_locked_candidates_eliminations,
+    _branch_naked_pair_eliminations,
     _common_branch_eliminations,
     _common_branch_placements,
     _common_eliminations_for_branches,
@@ -335,6 +339,58 @@ class ChainEngineTests(unittest.TestCase):
     def test_build_digit_strong_link_graph_handles_empty_digit_positions(self) -> None:
         graph = build_digit_strong_link_graph({0: {1}, 1: {2}}, 9)
         self.assertEqual(graph, {})
+
+    def test_branch_locked_candidates_eliminations_detects_pointing(self) -> None:
+        candidates = {
+            0: {1, 5},
+            1: {2, 5},
+            3: {5, 6},
+        }
+        eliminations = _branch_locked_candidates_eliminations(candidates)
+        self.assertEqual(eliminations, [(3, 5)])
+
+    def test_branch_naked_pair_eliminations_detects_pair_cleanup(self) -> None:
+        candidates = {
+            0: {1, 2},
+            1: {1, 2},
+            2: {1, 2, 3},
+        }
+        eliminations = _branch_naked_pair_eliminations(candidates)
+        self.assertEqual(eliminations, [(2, 1), (2, 2)])
+
+    def test_apply_branch_candidate_reductions_updates_allowed_state(self) -> None:
+        candidates = {
+            0: {1, 2},
+            1: {1, 2},
+            2: {1, 2, 3},
+        }
+        allowed = {cell_index: set(options) for cell_index, options in candidates.items()}
+
+        changed, invalid = _apply_branch_candidate_reductions(candidates, allowed)
+
+        self.assertTrue(changed)
+        self.assertFalse(invalid)
+        self.assertEqual(candidates[2], {3})
+        self.assertEqual(allowed[2], {3})
+
+    def test_best_forcing_consequence_prefers_rank_then_scope(self) -> None:
+        elimination_only = chain_engine.ForcingConsequence(
+            pivot_cell=0,
+            placements=(),
+            eliminations=((10, 4),),
+            reason="elim",
+        )
+        placement = chain_engine.ForcingConsequence(
+            pivot_cell=1,
+            placements=((1, 7),),
+            eliminations=(),
+            reason="place",
+        )
+        best = _best_forcing_consequence(None, elimination_only, rank=1)
+        best = _best_forcing_consequence(best, placement, rank=2)
+        self.assertIsNotNone(best)
+        assert best is not None
+        self.assertEqual(best[1].pivot_cell, 1)
 
 
 if __name__ == "__main__":

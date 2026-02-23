@@ -1,9 +1,10 @@
-"""Forcing Nets technique (restricted implementation).
+"""Forcing Nets technique (expanded implementation).
 
 Meaning:
     Assume each candidate of a 2- to 4-candidate pivot cell in turn and
-    propagate forced singles. If all valid branches agree on a consequence,
-    or all but one branch contradict, that consequence is logically forced.
+    propagate consequences. Each branch now includes forced singles plus
+    lightweight candidate reductions (locked candidates and naked pairs) before
+    checking branch contradictions or shared outcomes.
 
 When used:
     On expert stalled grids after direct chain/fish/ALS techniques.
@@ -15,7 +16,7 @@ from sudoku_solver.types import Grid, Step, TechniqueName
 
 
 def apply_forcing_nets(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
-    """Apply a restricted forcing-net consequence, else return None."""
+    """Apply an expanded forcing-net consequence, else return None."""
     consequence = find_forcing_nets_consequence(grid, candidates)
     if consequence is None:
         return None
