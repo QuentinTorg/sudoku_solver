@@ -11,6 +11,7 @@ from sudoku_solver.techniques.exocet import apply_exocet
 from sudoku_solver.techniques.finned_swordfish import apply_finned_swordfish
 from sudoku_solver.techniques.finned_x_wing import apply_finned_x_wing
 from sudoku_solver.techniques.fireworks import apply_fireworks
+from sudoku_solver.techniques.forcing_chains import apply_forcing_chains
 from sudoku_solver.techniques.grouped_aic import apply_grouped_aic
 from sudoku_solver.techniques.hidden_pair import apply_hidden_pair
 from sudoku_solver.techniques.hidden_quad import apply_hidden_quad
@@ -64,6 +65,7 @@ class TechniqueNoOpTests(unittest.TestCase):
         self.assertIsNone(apply_nice_loops(grid, {}))
         self.assertIsNone(apply_als_chains(grid, {}))
         self.assertIsNone(apply_death_blossom(grid, {}))
+        self.assertIsNone(apply_forcing_chains(grid, {}))
         self.assertIsNone(apply_uniqueness_expansions(grid, {}))
         self.assertIsNone(apply_fireworks(grid, {}))
         self.assertIsNone(apply_wxyz_wing(grid, {}))

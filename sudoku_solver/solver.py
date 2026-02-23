@@ -16,6 +16,7 @@ from sudoku_solver.techniques import (
     apply_finned_swordfish,
     apply_finned_x_wing,
     apply_fireworks,
+    apply_forcing_chains,
     apply_grouped_aic,
     apply_hidden_pair,
     apply_hidden_quad,
@@ -88,6 +89,7 @@ _HIGH_RISK_TECHNIQUES = {
     TechniqueName.GROUPED_AIC,
     TechniqueName.NICE_LOOPS,
     TechniqueName.ALS_CHAINS,
+    TechniqueName.FORCING_CHAINS,
     TechniqueName.DEATH_BLOSSOM,
     TechniqueName.UNIQUENESS_EXPANSIONS,
     TechniqueName.FIREWORKS,
@@ -120,6 +122,7 @@ _DEFERRED_TECHNIQUE_NAMES = {
     "sue_de_coq",
     "als_chains",
     "death_blossom",
+    "forcing_chains",
     "uniqueness_expansions",
     "fireworks",
     "wxyz_wing",
@@ -321,6 +324,7 @@ def _resolve_techniques(
         "nice_loops": apply_nice_loops,
         "als_chains": apply_als_chains,
         "death_blossom": apply_death_blossom,
+        "forcing_chains": apply_forcing_chains,
         "uniqueness_expansions": apply_uniqueness_expansions,
         "fireworks": apply_fireworks,
         "wxyz_wing": apply_wxyz_wing,
@@ -617,6 +621,7 @@ def _classify_difficulty(
         or TechniqueName.X_CYCLES in techniques_used
         or TechniqueName.XY_CHAIN in techniques_used
         or TechniqueName.ALS_CHAINS in techniques_used
+        or TechniqueName.FORCING_CHAINS in techniques_used
         or TechniqueName.DEATH_BLOSSOM in techniques_used
         or TechniqueName.FIREWORKS in techniques_used
         or TechniqueName.WXYZ_WING in techniques_used

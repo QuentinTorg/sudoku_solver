@@ -6,8 +6,10 @@ from sudoku_solver.engines.chain_engine import (
     component_edge_count,
     find_aic_elimination,
     find_coloring_eliminations,
+    find_forcing_chains_consequence,
     shared_single_candidate,
 )
+from sudoku_solver.grid import parse_grid
 
 
 class ChainEngineTests(unittest.TestCase):
@@ -69,6 +71,31 @@ class ChainEngineTests(unittest.TestCase):
         self.assertEqual(bivalue_cells(candidates), [0, 1])
         self.assertEqual(shared_single_candidate(candidates, 0, 1), 2)
         self.assertIsNone(shared_single_candidate(candidates, 0, 2))
+
+    def test_find_forcing_chains_consequence_detects_contradiction_branch(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2},
+            1: {1},
+        }
+
+        consequence = find_forcing_chains_consequence(grid, candidates)
+
+        self.assertIsNotNone(consequence)
+        assert consequence is not None
+        self.assertEqual(consequence.pivot_cell, 0)
+        self.assertEqual(consequence.placements, ((0, 2),))
+        self.assertEqual(consequence.eliminations, ())
+
+    def test_find_forcing_chains_consequence_returns_none_without_forcing(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2},
+            1: {1, 2, 3},
+        }
+
+        consequence = find_forcing_chains_consequence(grid, candidates)
+        self.assertIsNone(consequence)
 
 
 if __name__ == "__main__":

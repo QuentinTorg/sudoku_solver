@@ -30,6 +30,7 @@ class TechniqueName(StrEnum):
     NICE_LOOPS = "nice_loops"
     X_CYCLES = "x_cycles"
     XY_CHAIN = "xy_chain"
+    FORCING_CHAINS = "forcing_chains"
     ALS_CHAINS = "als_chains"
     DEATH_BLOSSOM = "death_blossom"
     UNIQUENESS_EXPANSIONS = "uniqueness_expansions"

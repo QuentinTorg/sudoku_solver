@@ -10,6 +10,7 @@ from sudoku_solver.techniques.exocet import apply_exocet
 from sudoku_solver.techniques.finned_swordfish import apply_finned_swordfish
 from sudoku_solver.techniques.finned_x_wing import apply_finned_x_wing
 from sudoku_solver.techniques.fireworks import apply_fireworks
+from sudoku_solver.techniques.forcing_chains import apply_forcing_chains
 from sudoku_solver.techniques.grouped_aic import apply_grouped_aic
 from sudoku_solver.techniques.hidden_pair import apply_hidden_pair
 from sudoku_solver.techniques.hidden_quad import apply_hidden_quad
@@ -53,6 +54,7 @@ __all__ = [
     "apply_finned_swordfish",
     "apply_finned_x_wing",
     "apply_fireworks",
+    "apply_forcing_chains",
     "apply_grouped_aic",
     "apply_hidden_pair",
     "apply_hidden_quad",

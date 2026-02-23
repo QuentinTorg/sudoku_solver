@@ -514,6 +514,11 @@ Eliminate `3` from `r4c4`.
   Links multiple almost-locked sets to propagate eliminations across units.
   The current implementation extends safe ALS-XZ-style reductions.
   Use in advanced ALS-rich states.
+- Forcing Chains / Nets (restricted):
+  Branches on a bivalue pivot candidate and propagates forced singles.
+  If one branch contradicts or all branches agree on a consequence, that
+  placement/elimination is applied.
+  Use on expert-level stalls after local chain/fish/ALS rules.
 - Death Blossom (restricted):
   A stem cell plus two petals can force a shared external candidate false.
   Useful when petal pairs tie different stem digits to the same outside value.
@@ -619,6 +624,7 @@ all_techniques_result = solve_from_string(
         "grouped_aic",
         "nice_loops",
         "als_chains",
+        "forcing_chains",
         "death_blossom",
         "uniqueness_expansions",
         "fireworks",

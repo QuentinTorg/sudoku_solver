@@ -4,6 +4,7 @@ This module centralizes graph construction and chain traversals used by:
 - AIC-family techniques
 - Coloring/X-Cycles techniques
 - XY-Chain neighborhood scans
+- Forcing Chains/Nets branch consequences
 """
 
 from collections import deque
@@ -11,6 +12,8 @@ from dataclasses import dataclass
 from itertools import combinations
 from typing import TypeVar
 
+from sudoku_solver.candidates import get_candidates
+from sudoku_solver.types import Grid
 from sudoku_solver.units import all_units, peers
 
 Node = tuple[int, int]  # (cell_index, digit)
@@ -25,6 +28,23 @@ class AicElimination:
     start_cell: int
     end_cell: int
     eliminations: tuple[tuple[int, int], ...]
+
+
+@dataclass(slots=True, frozen=True)
+class ForcingConsequence:
+    """Consequence detected by bivalue forcing-chain branch analysis."""
+
+    pivot_cell: int
+    placements: tuple[tuple[int, int], ...]
+    eliminations: tuple[tuple[int, int], ...]
+    reason: str
+
+
+@dataclass(slots=True)
+class _ForcingBranchResult:
+    valid: bool
+    cells: list[int]
+    candidates: dict[int, set[int]]
 
 
 def add_undirected_edge(
@@ -286,3 +306,211 @@ def shared_single_candidate(
     if len(shared) != 1:
         return None
     return next(iter(shared))
+
+
+def find_forcing_chains_consequence(
+    grid: Grid,
+    candidates: dict[int, set[int]],
+) -> ForcingConsequence | None:
+    """Find one forcing-chains/net consequence from a bivalue pivot."""
+    if not candidates:
+        return None
+
+    allowed = {cell_index: set(options) for cell_index, options in candidates.items()}
+    for pivot_cell in bivalue_cells(candidates):
+        pivot_digits = sorted(candidates[pivot_cell])
+        if len(pivot_digits) != 2:
+            continue
+
+        first_digit, second_digit = pivot_digits
+        first_branch = _propagate_assumption(grid.cells, allowed, pivot_cell, first_digit)
+        second_branch = _propagate_assumption(grid.cells, allowed, pivot_cell, second_digit)
+
+        if first_branch.valid and not second_branch.valid:
+            return ForcingConsequence(
+                pivot_cell=pivot_cell,
+                placements=((pivot_cell, first_digit),),
+                eliminations=(),
+                reason=(
+                    f"Assuming {second_digit} in cell {pivot_cell} causes contradiction; "
+                    f"cell {pivot_cell} must be {first_digit}."
+                ),
+            )
+        if second_branch.valid and not first_branch.valid:
+            return ForcingConsequence(
+                pivot_cell=pivot_cell,
+                placements=((pivot_cell, second_digit),),
+                eliminations=(),
+                reason=(
+                    f"Assuming {first_digit} in cell {pivot_cell} causes contradiction; "
+                    f"cell {pivot_cell} must be {second_digit}."
+                ),
+            )
+        if not first_branch.valid or not second_branch.valid:
+            continue
+
+        common_placements = _common_branch_placements(
+            grid.cells,
+            first_branch.cells,
+            second_branch.cells,
+        )
+        if common_placements:
+            return ForcingConsequence(
+                pivot_cell=pivot_cell,
+                placements=tuple(common_placements),
+                eliminations=(),
+                reason=(
+                    f"Both forcing branches from pivot cell {pivot_cell} place the same values."
+                ),
+            )
+
+        common_eliminations = _common_branch_eliminations(
+            candidates,
+            first_branch.candidates,
+            second_branch.candidates,
+            pivot_cell=pivot_cell,
+        )
+        if common_eliminations:
+            return ForcingConsequence(
+                pivot_cell=pivot_cell,
+                placements=(),
+                eliminations=tuple(common_eliminations),
+                reason=(
+                    f"Both forcing branches from pivot cell {pivot_cell} "
+                    "remove the same candidates."
+                ),
+            )
+
+    return None
+
+
+def _propagate_assumption(
+    base_cells: tuple[int, ...],
+    allowed_candidates: dict[int, set[int]],
+    assumed_cell: int,
+    assumed_digit: int,
+) -> _ForcingBranchResult:
+    cells = list(base_cells)
+    current = cells[assumed_cell]
+    if current not in (0, assumed_digit):
+        return _ForcingBranchResult(valid=False, cells=cells, candidates={})
+    cells[assumed_cell] = assumed_digit
+
+    while True:
+        if _has_duplicate_values(cells):
+            return _ForcingBranchResult(valid=False, cells=cells, candidates={})
+
+        branch_candidates = _state_candidates(cells, allowed_candidates)
+        if branch_candidates is None:
+            return _ForcingBranchResult(valid=False, cells=cells, candidates={})
+
+        forced = _forced_single_placements(cells, branch_candidates)
+        if not forced:
+            return _ForcingBranchResult(valid=True, cells=cells, candidates=branch_candidates)
+
+        changed = False
+        for cell_index, digit in sorted(forced.items()):
+            current_value = cells[cell_index]
+            if current_value == digit:
+                continue
+            if current_value not in (0, digit):
+                return _ForcingBranchResult(valid=False, cells=cells, candidates={})
+            cells[cell_index] = digit
+            changed = True
+        if not changed:
+            return _ForcingBranchResult(valid=True, cells=cells, candidates=branch_candidates)
+
+
+def _has_duplicate_values(cells: list[int]) -> bool:
+    for _, unit_cells in all_units():
+        seen: set[int] = set()
+        for cell_index in unit_cells:
+            value = cells[cell_index]
+            if value == 0:
+                continue
+            if value in seen:
+                return True
+            seen.add(value)
+    return False
+
+
+def _state_candidates(
+    cells: list[int],
+    allowed_candidates: dict[int, set[int]],
+) -> dict[int, set[int]] | None:
+    base_candidates = get_candidates(Grid(cells=tuple(cells)))
+    normalized: dict[int, set[int]] = {}
+    for cell_index, base_options in base_candidates.items():
+        retained = allowed_candidates.get(cell_index, set(base_options))
+        options = set(base_options) & set(retained)
+        if not options:
+            return None
+        normalized[cell_index] = options
+    return normalized
+
+
+def _forced_single_placements(
+    cells: list[int],
+    candidates: dict[int, set[int]],
+) -> dict[int, int]:
+    forced: dict[int, int] = {}
+    for cell_index, options in candidates.items():
+        if len(options) == 1:
+            forced[cell_index] = next(iter(options))
+
+    for _, unit_cells in all_units():
+        for digit in range(1, 10):
+            positions = [
+                cell_index
+                for cell_index in unit_cells
+                if cells[cell_index] == 0
+                and cell_index in candidates
+                and digit in candidates[cell_index]
+            ]
+            if len(positions) != 1:
+                continue
+            target = positions[0]
+            existing = forced.get(target)
+            if existing is not None and existing != digit:
+                forced[target] = -1
+                continue
+            forced[target] = digit
+
+    return {cell_index: digit for cell_index, digit in forced.items() if digit > 0}
+
+
+def _common_branch_placements(
+    base_cells: tuple[int, ...],
+    first_cells: list[int],
+    second_cells: list[int],
+) -> list[tuple[int, int]]:
+    placements: list[tuple[int, int]] = []
+    for index, original in enumerate(base_cells):
+        if original != 0:
+            continue
+        first_value = first_cells[index]
+        second_value = second_cells[index]
+        if first_value == 0 or first_value != second_value:
+            continue
+        placements.append((index, first_value))
+    return placements
+
+
+def _common_branch_eliminations(
+    base_candidates: dict[int, set[int]],
+    first_candidates: dict[int, set[int]],
+    second_candidates: dict[int, set[int]],
+    *,
+    pivot_cell: int,
+) -> list[tuple[int, int]]:
+    eliminations: list[tuple[int, int]] = []
+    for cell_index, options in base_candidates.items():
+        if cell_index == pivot_cell:
+            continue
+        first_options = first_candidates.get(cell_index, set())
+        second_options = second_candidates.get(cell_index, set())
+        for digit in sorted(options):
+            if digit in first_options or digit in second_options:
+                continue
+            eliminations.append((cell_index, digit))
+    return eliminations
