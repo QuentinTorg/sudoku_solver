@@ -62,7 +62,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   43. Forcing Nets (expanded)
   44. Franken/Mutant Fish (expanded)
   45. Squirmbag
-  See `sudoku_solver/techniques/README.md` for detailed explanations and full-grid pattern tables.
+  See [Technique Reference](sudoku_solver/techniques/README.md) for detailed explanations and full-grid pattern tables.
 - Default technique set:
   All implemented human techniques run by default.
   Runtime is controlled by the three-pass scheduler (primary, deferred, and
@@ -98,7 +98,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
 Detailed explanations, full-grid pattern tables, and implementation notes for
 every technique are in:
 
-- `sudoku_solver/techniques/README.md`
+- [Technique Reference](sudoku_solver/techniques/README.md)
 
 The list above remains the authoritative set of selectable technique keys. The
 solver still runs them in a deterministic order by default.
@@ -209,7 +209,7 @@ python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --p
 - `sudoku_solver/engines/als_engine.py`: shared ALS and petal-structure scans (ALS-XZ/ALS-Chains/Death Blossom).
 - `sudoku_solver/engines/uniqueness_engine.py`: shared rectangle/pair scans for uniqueness-family rules.
 - `sudoku_solver/techniques/`: individual technique implementations.
-- `sudoku_solver/techniques/README.md`: detailed technique explanations and full-grid pattern illustrations.
+- [`sudoku_solver/techniques/README.md`](sudoku_solver/techniques/README.md): detailed technique explanations and full-grid pattern illustrations.
 - `sudoku_solver/solver.py`: orchestration loop, step application, optional fallback search, difficulty classification.
 - `sudoku_solver/cli.py`: CLI parser, single/file runners, progress and reporting output.
 - `sudoku_solver/types.py`: core dataclasses/enums (`Grid`, `Step`, `SolveResult`, etc.).
@@ -296,4 +296,4 @@ Recommended contribution pattern:
 
 - Keep technique changes isolated per PR when possible.
 - Include at least one regression test for each bug fix.
-- If adding a technique, document it in `sudoku_solver/techniques/README.md` and add focused tests under `tests/techniques/`.
+- If adding a technique, document it in [`sudoku_solver/techniques/README.md`](sudoku_solver/techniques/README.md) and add focused tests under `tests/techniques/`.
