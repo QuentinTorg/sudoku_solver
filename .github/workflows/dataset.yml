@@ -26,14 +26,14 @@ jobs:
           python -m pip install .[dev]
 
       - name: Dataset Regression (top95)
-        run: python -m sudoku_solver --puzzle-file puzzles/top95.txt --allow-fallback-search --max-failures 1
+        run: python -m sudoku_solver --puzzle-file puzzles/top95.txt --max-failures 1
 
       - name: Dataset Regression (top1465)
-        run: python -m sudoku_solver --puzzle-file puzzles/top1465.txt --allow-fallback-search --max-failures 1
+        run: python -m sudoku_solver --puzzle-file puzzles/top1465.txt --max-failures 1
 
       - name: Benchmark top1465
         run: |
-          python scripts/benchmark.py puzzles/top1465.txt --allow-fallback-search --progress-every 0 --top-slowest 15 | tee benchmark_top1465.txt
+          python scripts/benchmark.py puzzles/top1465.txt --progress-every 0 --top-slowest 15 | tee benchmark_top1465.txt
 
       - name: Upload Benchmark Artifact
         if: always()
