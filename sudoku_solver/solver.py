@@ -368,9 +368,9 @@ def _find_unique_solution_limited(
         msg = "max_solutions must be >= 1"
         raise ValueError(msg)
     state = list(cells)
-    rows = [set() for _ in range(9)]
-    cols = [set() for _ in range(9)]
-    boxes = [set() for _ in range(9)]
+    rows: list[set[int]] = [set() for _ in range(9)]
+    cols: list[set[int]] = [set() for _ in range(9)]
+    boxes: list[set[int]] = [set() for _ in range(9)]
 
     for index, value in enumerate(state):
         if value == 0:

@@ -25,7 +25,8 @@ def apply_remote_pairs(grid: Grid, candidates: dict[int, set[int]]) -> Step | No
     for cell_index, options in candidates.items():
         if len(options) != 2:
             continue
-        pair = tuple(sorted(options))
+        first_digit, second_digit = sorted(options)
+        pair = (first_digit, second_digit)
         pair_to_cells.setdefault(pair, []).append(cell_index)
 
     for pair, pair_cells in pair_to_cells.items():
