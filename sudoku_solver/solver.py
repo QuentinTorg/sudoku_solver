@@ -35,6 +35,7 @@ from sudoku_solver.techniques import (
     apply_remote_pairs,
     apply_sashimi_fish,
     apply_simple_coloring,
+    apply_squirmbag,
     apply_skyscraper,
     apply_sue_de_coq,
     apply_sue_de_coq_full,
@@ -96,6 +97,7 @@ _HIGH_RISK_TECHNIQUES = {
     TechniqueName.DEATH_BLOSSOM,
     TechniqueName.UNIQUENESS_EXPANSIONS,
     TechniqueName.FIREWORKS,
+    TechniqueName.SQUIRMBAG,
     TechniqueName.FRANKEN_MUTANT_FISH,
     TechniqueName.WXYZ_WING,
     TechniqueName.EXOCET,
@@ -135,6 +137,7 @@ _DEFERRED_TECHNIQUE_NAMES = {
     "sue_de_coq_full",
     "kraken_fish",
     "sashimi_fish",
+    "squirmbag",
 }
 
 # Ultra-expensive techniques are attempted only after both primary and
@@ -351,6 +354,7 @@ def _resolve_techniques(
         "sue_de_coq_full": apply_sue_de_coq_full,
         "kraken_fish": apply_kraken_fish,
         "sashimi_fish": apply_sashimi_fish,
+        "squirmbag": apply_squirmbag,
         "als_xz": apply_als_xz,
         "sue_de_coq": apply_sue_de_coq,
         "bug_plus_one": apply_bug_plus_one,
@@ -651,6 +655,7 @@ def _classify_difficulty(
         or TechniqueName.FORCING_NETS in techniques_used
         or TechniqueName.DEATH_BLOSSOM in techniques_used
         or TechniqueName.FIREWORKS in techniques_used
+        or TechniqueName.SQUIRMBAG in techniques_used
         or TechniqueName.FRANKEN_MUTANT_FISH in techniques_used
         or TechniqueName.WXYZ_WING in techniques_used
         or TechniqueName.EXOCET in techniques_used

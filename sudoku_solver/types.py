@@ -23,6 +23,7 @@ class TechniqueName(StrEnum):
     SWORDFISH = "swordfish"
     FINNED_SWORDFISH = "finned_swordfish"
     JELLYFISH = "jellyfish"
+    SQUIRMBAG = "squirmbag"
     SIMPLE_COLORING = "simple_coloring"
     THREE_D_MEDUSA = "three_d_medusa"
     AIC = "aic"

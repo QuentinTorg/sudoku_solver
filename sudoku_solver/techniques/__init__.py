@@ -29,6 +29,7 @@ from sudoku_solver.techniques.nice_loops import apply_nice_loops
 from sudoku_solver.techniques.remote_pairs import apply_remote_pairs
 from sudoku_solver.techniques.sashimi_fish import apply_sashimi_fish
 from sudoku_solver.techniques.simple_coloring import apply_simple_coloring
+from sudoku_solver.techniques.squirmbag import apply_squirmbag
 from sudoku_solver.techniques.skyscraper import apply_skyscraper
 from sudoku_solver.techniques.sue_de_coq import apply_sue_de_coq
 from sudoku_solver.techniques.sue_de_coq_full import apply_sue_de_coq_full
@@ -76,6 +77,7 @@ __all__ = [
     "apply_sashimi_fish",
     "apply_skyscraper",
     "apply_simple_coloring",
+    "apply_squirmbag",
     "apply_swordfish",
     "apply_sue_de_coq",
     "apply_sue_de_coq_full",

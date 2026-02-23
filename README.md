@@ -61,6 +61,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   42. Forcing Chains (restricted)
   43. Forcing Nets (restricted)
   44. Franken/Mutant Fish (restricted)
+  45. Squirmbag
 - Default technique order:
   Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
   `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
@@ -70,7 +71,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   `nice_loops`, `als_chains`, `death_blossom`, `uniqueness_expansions`,
   `fireworks`, `wxyz_wing`, `exocet`, `sue_de_coq_full`, `kraken_fish`,
   `sashimi_fish`, `finned_x_wing`, `finned_swordfish`, `empty_rectangle`,
-  `remote_pairs`, `two_string_kite`, `skyscraper`, `unique_rectangle`,
+  `squirmbag`, `remote_pairs`, `two_string_kite`, `skyscraper`, `unique_rectangle`,
   `forcing_chains`, `forcing_nets`) are
   available through API `techniques=[...]` selection.
 - Advanced-technique safety:
@@ -455,6 +456,10 @@ Eliminate `3` from `r4c4`.
   A larger 4-row/4-column fish version of Swordfish.
   It enables similar eliminations but has a higher scan cost.
   Use late in the pipeline on harder stalls.
+- Squirmbag:
+  A size-5 fish pattern extending Jellyfish-style logic.
+  It can eliminate a digit from cover lines outside five base lines.
+  Use very late on fish-heavy expert stalls.
 - Finned X-Wing / Sashimi X-Wing:
   A near X-Wing where one extra "fin" candidate prevents a pure rectangle.
   Eliminations are limited to cells in the fin's box that also align with base lines.
@@ -633,6 +638,7 @@ all_techniques_result = solve_from_string(
         "w_wing",
         "swordfish",
         "jellyfish",
+        "squirmbag",
         "simple_coloring",
         "three_d_medusa",
         "aic",
