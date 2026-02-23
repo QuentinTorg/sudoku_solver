@@ -17,6 +17,7 @@ from sudoku_solver.techniques import (
     apply_finned_x_wing,
     apply_fireworks,
     apply_forcing_chains,
+    apply_franken_mutant_fish,
     apply_grouped_aic,
     apply_hidden_pair,
     apply_hidden_quad,
@@ -93,6 +94,7 @@ _HIGH_RISK_TECHNIQUES = {
     TechniqueName.DEATH_BLOSSOM,
     TechniqueName.UNIQUENESS_EXPANSIONS,
     TechniqueName.FIREWORKS,
+    TechniqueName.FRANKEN_MUTANT_FISH,
     TechniqueName.WXYZ_WING,
     TechniqueName.EXOCET,
     TechniqueName.SUE_DE_COQ_FULL,
@@ -125,6 +127,7 @@ _DEFERRED_TECHNIQUE_NAMES = {
     "forcing_chains",
     "uniqueness_expansions",
     "fireworks",
+    "franken_mutant_fish",
     "wxyz_wing",
     "exocet",
     "sue_de_coq_full",
@@ -327,6 +330,7 @@ def _resolve_techniques(
         "forcing_chains": apply_forcing_chains,
         "uniqueness_expansions": apply_uniqueness_expansions,
         "fireworks": apply_fireworks,
+        "franken_mutant_fish": apply_franken_mutant_fish,
         "wxyz_wing": apply_wxyz_wing,
         "exocet": apply_exocet,
         "sue_de_coq_full": apply_sue_de_coq_full,
@@ -624,6 +628,7 @@ def _classify_difficulty(
         or TechniqueName.FORCING_CHAINS in techniques_used
         or TechniqueName.DEATH_BLOSSOM in techniques_used
         or TechniqueName.FIREWORKS in techniques_used
+        or TechniqueName.FRANKEN_MUTANT_FISH in techniques_used
         or TechniqueName.WXYZ_WING in techniques_used
         or TechniqueName.EXOCET in techniques_used
         or TechniqueName.ALS_XZ in techniques_used

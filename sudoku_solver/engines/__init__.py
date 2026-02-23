@@ -27,6 +27,7 @@ from sudoku_solver.engines.fish_engine import (
     FishElimination,
     find_finned_swordfish_elimination,
     find_finned_x_wing_elimination,
+    find_franken_mutant_fish_elimination,
     find_standard_fish_elimination,
 )
 from sudoku_solver.engines.uniqueness_engine import (
@@ -56,6 +57,7 @@ __all__ = [
     "find_als_xz_elimination",
     "find_coloring_eliminations",
     "find_death_blossom_elimination",
+    "find_franken_mutant_fish_elimination",
     "find_finned_swordfish_elimination",
     "find_finned_x_wing_elimination",
     "find_forcing_chains_consequence",

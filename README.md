@@ -59,6 +59,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   40. Kraken Fish (restricted)
   41. Sashimi Fish (restricted)
   42. Forcing Chains / Nets (restricted)
+  43. Franken/Mutant Fish (restricted)
 - Default technique order:
   Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
   `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
@@ -555,6 +556,10 @@ Eliminate `3` from `r4c4`.
   Broader sashimi fish family extending finned fish logic.
   Current implementation reuses safe finned-fish-compatible eliminations.
   Use on advanced fish-like stalls.
+- Franken/Mutant Fish (restricted):
+  Extends fish base units to include box units mixed with row/column units.
+  This can unlock eliminations that pure line-only fish cannot make.
+  Use late on fish-heavy expert stalls.
 
 Performance note:
 The heaviest techniques are intentionally kept out of default order and are
@@ -629,6 +634,7 @@ all_techniques_result = solve_from_string(
         "nice_loops",
         "als_chains",
         "forcing_chains",
+        "franken_mutant_fish",
         "death_blossom",
         "uniqueness_expansions",
         "fireworks",

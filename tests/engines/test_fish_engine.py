@@ -3,6 +3,7 @@ import unittest
 from sudoku_solver.engines.fish_engine import (
     find_finned_swordfish_elimination,
     find_finned_x_wing_elimination,
+    find_franken_mutant_fish_elimination,
     find_standard_fish_elimination,
 )
 
@@ -62,6 +63,22 @@ class FishEngineTests(unittest.TestCase):
         self.assertIsNotNone(fish)
         assert fish is not None
         self.assertEqual(fish.eliminations, ((10, 5),))
+
+    def test_find_franken_mutant_fish_elimination(self) -> None:
+        candidates = {
+            3: {1, 7},
+            4: {2, 7},
+            12: {3, 7},
+            22: {4, 7},
+            57: {5, 7},
+            58: {6, 7},
+        }
+
+        fish = find_franken_mutant_fish_elimination(candidates, 7)
+
+        self.assertIsNotNone(fish)
+        assert fish is not None
+        self.assertEqual(fish.eliminations, ((57, 7), (58, 7)))
 
 
 if __name__ == "__main__":

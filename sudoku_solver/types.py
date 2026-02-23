@@ -35,6 +35,7 @@ class TechniqueName(StrEnum):
     DEATH_BLOSSOM = "death_blossom"
     UNIQUENESS_EXPANSIONS = "uniqueness_expansions"
     FIREWORKS = "fireworks"
+    FRANKEN_MUTANT_FISH = "franken_mutant_fish"
     WXYZ_WING = "wxyz_wing"
     EXOCET = "exocet"
     SUE_DE_COQ_FULL = "sue_de_coq_full"

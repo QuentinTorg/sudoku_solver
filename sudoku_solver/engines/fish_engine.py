@@ -17,6 +17,14 @@ class FishElimination:
     base_units: tuple[int, ...]
 
 
+@dataclass(slots=True, frozen=True)
+class _FrankenBaseUnit:
+    kind: str
+    index: int
+    covers: frozenset[int]
+    protected_cells: frozenset[int]
+
+
 def find_standard_fish_elimination(
     candidates: dict[int, set[int]],
     digit: int,
@@ -442,3 +450,169 @@ def _find_finned_swordfish_col_based(
                     base_units=tuple(cols),
                 )
     return None
+
+
+def find_franken_mutant_fish_elimination(
+    candidates: dict[int, set[int]],
+    digit: int,
+) -> FishElimination | None:
+    """Find a restricted franken/mutant fish elimination for one digit."""
+    row_oriented = _find_franken_orientation(candidates, digit, orientation="row")
+    if row_oriented is not None:
+        return row_oriented
+    return _find_franken_orientation(candidates, digit, orientation="col")
+
+
+def _find_franken_orientation(
+    candidates: dict[int, set[int]],
+    digit: int,
+    *,
+    orientation: str,
+) -> FishElimination | None:
+    bases = _collect_franken_bases(candidates, digit, orientation=orientation)
+    for first_base, second_base in combinations(bases, 2):
+        if "box" not in {first_base.kind, second_base.kind}:
+            continue
+
+        cover_union = set(first_base.covers | second_base.covers)
+        if len(cover_union) != 2:
+            continue
+        sorted_cover = sorted(cover_union)
+        cover_pair = (sorted_cover[0], sorted_cover[1])
+
+        protected = set(first_base.protected_cells | second_base.protected_cells)
+        eliminations = _franken_eliminations(
+            candidates,
+            digit,
+            orientation=orientation,
+            cover_lines=cover_pair,
+            protected_cells=protected,
+        )
+        if not eliminations:
+            continue
+
+        affected_units = (
+            _franken_unit_label(first_base),
+            _franken_unit_label(second_base),
+            f"{'col' if orientation == 'row' else 'row'}{cover_pair[0] + 1}",
+            f"{'col' if orientation == 'row' else 'row'}{cover_pair[1] + 1}",
+        )
+        return FishElimination(
+            digit=digit,
+            eliminations=tuple(sorted(eliminations)),
+            affected_units=affected_units,
+            orientation=f"franken_{orientation}",
+            base_units=(first_base.index, second_base.index),
+        )
+
+    return None
+
+
+def _collect_franken_bases(
+    candidates: dict[int, set[int]],
+    digit: int,
+    *,
+    orientation: str,
+) -> list[_FrankenBaseUnit]:
+    bases: list[_FrankenBaseUnit] = []
+    if orientation == "row":
+        for row in range(9):
+            covers = {
+                col_index(cell_index)
+                for cell_index in row_cells(row)
+                if cell_index in candidates and digit in candidates[cell_index]
+            }
+            if 1 <= len(covers) <= 2:
+                bases.append(
+                    _FrankenBaseUnit(
+                        kind="row",
+                        index=row,
+                        covers=frozenset(covers),
+                        protected_cells=frozenset(row_cells(row)),
+                    )
+                )
+        for box in range(9):
+            covers = {
+                col_index(cell_index)
+                for cell_index in box_cells(box)
+                if cell_index in candidates and digit in candidates[cell_index]
+            }
+            if 1 <= len(covers) <= 2:
+                bases.append(
+                    _FrankenBaseUnit(
+                        kind="box",
+                        index=box,
+                        covers=frozenset(covers),
+                        protected_cells=frozenset(box_cells(box)),
+                    )
+                )
+        return bases
+
+    for col in range(9):
+        covers = {
+            row_index(cell_index)
+            for cell_index in col_cells(col)
+            if cell_index in candidates and digit in candidates[cell_index]
+        }
+        if 1 <= len(covers) <= 2:
+            bases.append(
+                _FrankenBaseUnit(
+                    kind="col",
+                    index=col,
+                    covers=frozenset(covers),
+                    protected_cells=frozenset(col_cells(col)),
+                )
+            )
+    for box in range(9):
+        covers = {
+            row_index(cell_index)
+            for cell_index in box_cells(box)
+            if cell_index in candidates and digit in candidates[cell_index]
+        }
+        if 1 <= len(covers) <= 2:
+            bases.append(
+                _FrankenBaseUnit(
+                    kind="box",
+                    index=box,
+                    covers=frozenset(covers),
+                    protected_cells=frozenset(box_cells(box)),
+                )
+            )
+    return bases
+
+
+def _franken_eliminations(
+    candidates: dict[int, set[int]],
+    digit: int,
+    *,
+    orientation: str,
+    cover_lines: tuple[int, int],
+    protected_cells: set[int],
+) -> list[tuple[int, int]]:
+    eliminations: list[tuple[int, int]] = []
+    if orientation == "row":
+        for cover_col in cover_lines:
+            for cell_index in col_cells(cover_col):
+                if cell_index in protected_cells:
+                    continue
+                if cell_index not in candidates or digit not in candidates[cell_index]:
+                    continue
+                eliminations.append((cell_index, digit))
+        return eliminations
+
+    for cover_row in cover_lines:
+        for cell_index in row_cells(cover_row):
+            if cell_index in protected_cells:
+                continue
+            if cell_index not in candidates or digit not in candidates[cell_index]:
+                continue
+            eliminations.append((cell_index, digit))
+    return eliminations
+
+
+def _franken_unit_label(base: _FrankenBaseUnit) -> str:
+    if base.kind == "row":
+        return f"row{base.index + 1}"
+    if base.kind == "col":
+        return f"col{base.index + 1}"
+    return f"box{base.index + 1}"
