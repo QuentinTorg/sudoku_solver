@@ -4,30 +4,41 @@ from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
 from sudoku_solver.techniques import (
     apply_aic,
+    apply_als_chains,
     apply_als_xz,
     apply_bug_plus_one,
+    apply_death_blossom,
     apply_empty_rectangle,
+    apply_exocet,
     apply_finned_swordfish,
     apply_finned_x_wing,
+    apply_fireworks,
+    apply_grouped_aic,
     apply_hidden_pair,
     apply_hidden_quad,
     apply_hidden_single,
     apply_hidden_triple,
     apply_jellyfish,
+    apply_kraken_fish,
     apply_locked_candidates,
     apply_naked_pair,
     apply_naked_quad,
     apply_naked_single,
     apply_naked_triple,
+    apply_nice_loops,
     apply_remote_pairs,
+    apply_sashimi_fish,
     apply_simple_coloring,
     apply_skyscraper,
     apply_sue_de_coq,
+    apply_sue_de_coq_full,
     apply_swordfish,
     apply_three_d_medusa,
     apply_two_string_kite,
     apply_unique_rectangle,
+    apply_uniqueness_expansions,
     apply_w_wing,
+    apply_wxyz_wing,
     apply_x_cycles,
     apply_x_wing,
     apply_xy_chain,
@@ -61,6 +72,17 @@ _HIGH_RISK_TECHNIQUES = {
     TechniqueName.SUE_DE_COQ,
     TechniqueName.THREE_D_MEDUSA,
     TechniqueName.AIC,
+    TechniqueName.GROUPED_AIC,
+    TechniqueName.NICE_LOOPS,
+    TechniqueName.ALS_CHAINS,
+    TechniqueName.DEATH_BLOSSOM,
+    TechniqueName.UNIQUENESS_EXPANSIONS,
+    TechniqueName.FIREWORKS,
+    TechniqueName.WXYZ_WING,
+    TechniqueName.EXOCET,
+    TechniqueName.SUE_DE_COQ_FULL,
+    TechniqueName.KRAKEN_FISH,
+    TechniqueName.SASHIMI_FISH,
 }
 
 
@@ -245,6 +267,17 @@ def _resolve_techniques(
         "simple_coloring": apply_simple_coloring,
         "x_cycles": apply_x_cycles,
         "xy_chain": apply_xy_chain,
+        "grouped_aic": apply_grouped_aic,
+        "nice_loops": apply_nice_loops,
+        "als_chains": apply_als_chains,
+        "death_blossom": apply_death_blossom,
+        "uniqueness_expansions": apply_uniqueness_expansions,
+        "fireworks": apply_fireworks,
+        "wxyz_wing": apply_wxyz_wing,
+        "exocet": apply_exocet,
+        "sue_de_coq_full": apply_sue_de_coq_full,
+        "kraken_fish": apply_kraken_fish,
+        "sashimi_fish": apply_sashimi_fish,
         "als_xz": apply_als_xz,
         "sue_de_coq": apply_sue_de_coq,
         "bug_plus_one": apply_bug_plus_one,
@@ -517,10 +550,20 @@ def _classify_difficulty(
         or TechniqueName.SIMPLE_COLORING in techniques_used
         or TechniqueName.THREE_D_MEDUSA in techniques_used
         or TechniqueName.AIC in techniques_used
+        or TechniqueName.GROUPED_AIC in techniques_used
+        or TechniqueName.NICE_LOOPS in techniques_used
         or TechniqueName.X_CYCLES in techniques_used
         or TechniqueName.XY_CHAIN in techniques_used
+        or TechniqueName.ALS_CHAINS in techniques_used
+        or TechniqueName.DEATH_BLOSSOM in techniques_used
+        or TechniqueName.FIREWORKS in techniques_used
+        or TechniqueName.WXYZ_WING in techniques_used
+        or TechniqueName.EXOCET in techniques_used
         or TechniqueName.ALS_XZ in techniques_used
         or TechniqueName.SUE_DE_COQ in techniques_used
+        or TechniqueName.SUE_DE_COQ_FULL in techniques_used
+        or TechniqueName.KRAKEN_FISH in techniques_used
+        or TechniqueName.SASHIMI_FISH in techniques_used
     ):
         return DifficultyRating.EXPERT
     if (
@@ -533,6 +576,7 @@ def _classify_difficulty(
         or TechniqueName.EMPTY_RECTANGLE in techniques_used
         or TechniqueName.REMOTE_PAIRS in techniques_used
         or TechniqueName.BUG_PLUS_ONE in techniques_used
+        or TechniqueName.UNIQUENESS_EXPANSIONS in techniques_used
         or TechniqueName.TWO_STRING_KITE in techniques_used
         or TechniqueName.SKYSCRAPER in techniques_used
         or TechniqueName.UNIQUE_RECTANGLE in techniques_used
