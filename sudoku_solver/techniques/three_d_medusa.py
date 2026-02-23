@@ -1,8 +1,9 @@
-"""3D Medusa technique (restricted implementation).
+"""3D Medusa technique (expanded implementation).
 
 Meaning:
     Build two-color chains on candidate nodes using strong links across cells
-    and units. Use color contradictions/traps to eliminate candidates.
+    and units. Use color contradictions, cell bi-color, unit bi-color, and
+    color traps to eliminate candidates.
 
 When used:
     On advanced stalled grids after simpler coloring/fish methods.
@@ -19,7 +20,7 @@ Node = tuple[int, int]  # (cell_index, digit)
 
 
 def apply_three_d_medusa(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
-    """Apply restricted 3D Medusa elimination, else return None."""
+    """Apply expanded 3D Medusa elimination, else return None."""
     if not candidates:
         return None
 
@@ -56,6 +57,38 @@ def apply_three_d_medusa(grid: Grid, candidates: dict[int, set[int]]) -> Step | 
                     rationale="3D Medusa color contradiction removes one full color set.",
                     grid_snapshot_after=format_grid(grid),
                 )
+
+        cell_bicolor_eliminations = _find_cell_bicolor_eliminations(color, component, candidates)
+        if cell_bicolor_eliminations:
+            return Step(
+                technique=TechniqueName.THREE_D_MEDUSA,
+                placements=[],
+                eliminations=cell_bicolor_eliminations,
+                affected_units=[],
+                rationale=(
+                    "3D Medusa bi-color cell rule removes non-colored candidates "
+                    "from cells containing both colors."
+                ),
+                grid_snapshot_after=format_grid(grid),
+            )
+
+        unit_bicolor_eliminations = _find_unit_bicolor_digit_eliminations(
+            color,
+            component,
+            candidates,
+        )
+        if unit_bicolor_eliminations:
+            return Step(
+                technique=TechniqueName.THREE_D_MEDUSA,
+                placements=[],
+                eliminations=unit_bicolor_eliminations,
+                affected_units=[],
+                rationale=(
+                    "3D Medusa bi-color unit rule removes digit candidates in units "
+                    "that already contain both colors for that digit."
+                ),
+                grid_snapshot_after=format_grid(grid),
+            )
 
         trap_eliminations = _find_color_trap_eliminations(color, component, candidates)
         if trap_eliminations:
@@ -135,6 +168,57 @@ def _find_impossible_color(color: dict[Node, int], candidates: dict[int, set[int
 
     # Keep conservative: require contradiction within already-colored nodes.
     return None
+
+
+def _find_cell_bicolor_eliminations(
+    color: dict[Node, int],
+    component: set[Node],
+    candidates: dict[int, set[int]],
+) -> list[tuple[int, int]]:
+    colored_by_cell: dict[int, dict[int, set[int]]] = {}
+    for (cell_index, digit), value in color.items():
+        groups = colored_by_cell.setdefault(cell_index, {0: set(), 1: set()})
+        groups[value].add(digit)
+
+    eliminations: list[tuple[int, int]] = []
+    for cell_index, color_groups in colored_by_cell.items():
+        if not color_groups[0] or not color_groups[1]:
+            continue
+        for digit in sorted(candidates.get(cell_index, set())):
+            node = (cell_index, digit)
+            if node not in component:
+                eliminations.append((cell_index, digit))
+
+    return sorted(set(eliminations))
+
+
+def _find_unit_bicolor_digit_eliminations(
+    color: dict[Node, int],
+    component: set[Node],
+    candidates: dict[int, set[int]],
+) -> list[tuple[int, int]]:
+    colored_by_digit: dict[int, dict[int, set[int]]] = {}
+    for (cell_index, digit), value in color.items():
+        groups = colored_by_digit.setdefault(digit, {0: set(), 1: set()})
+        groups[value].add(cell_index)
+
+    eliminations: list[tuple[int, int]] = []
+    for digit, groups in colored_by_digit.items():
+        if not groups[0] or not groups[1]:
+            continue
+        for _, unit_cells in all_units():
+            if not (groups[0] & set(unit_cells) and groups[1] & set(unit_cells)):
+                continue
+            for cell_index in unit_cells:
+                node = (cell_index, digit)
+                if (
+                    node not in component
+                    and cell_index in candidates
+                    and digit in candidates[cell_index]
+                ):
+                    eliminations.append((cell_index, digit))
+
+    return sorted(set(eliminations))
 
 
 def _find_color_trap_eliminations(

@@ -33,7 +33,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   14. Swordfish
   15. Jellyfish
   16. Simple Coloring
-  17. 3D Medusa (restricted)
+  17. 3D Medusa (expanded)
   18. AIC (expanded)
   19. X-Cycles
   20. XY-Chain
@@ -479,9 +479,10 @@ Eliminate `3` from `r4c4`.
   A single digit is colored across strong links with two alternating colors.
   Color-wrap and color-trap conditions produce candidate eliminations.
   Use after fish/wing techniques when single-digit chains are present.
-- 3D Medusa (restricted):
+- 3D Medusa (expanded):
   Candidate nodes are two-colored using strong links across cells and units.
-  Color contradictions and color-trap interactions remove impossible candidates.
+  Color contradictions, cell bi-color, unit bi-color, and color-trap interactions
+  remove impossible candidates.
   Use on very hard stalled puzzles with dense conjugate/bivalue structure.
 - AIC (expanded):
   Alternating strong/weak links form inference chains across candidates.
