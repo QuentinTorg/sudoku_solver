@@ -127,12 +127,17 @@ _DEFERRED_TECHNIQUE_NAMES = {
     "forcing_chains",
     "uniqueness_expansions",
     "fireworks",
-    "franken_mutant_fish",
     "wxyz_wing",
     "exocet",
     "sue_de_coq_full",
     "kraken_fish",
     "sashimi_fish",
+}
+
+# Ultra-expensive techniques are attempted only after both primary and
+# deferred passes fail to progress in the current solve iteration.
+_ULTRA_EXPENSIVE_TECHNIQUE_NAMES = {
+    "franken_mutant_fish",
 }
 
 
@@ -144,7 +149,9 @@ def solve(
 ) -> SolveResult:
     """Solve a Sudoku grid using configured human techniques."""
     technique_order = _resolve_techniques(techniques)
-    primary_techniques, deferred_techniques = _partition_techniques(technique_order)
+    primary_techniques, deferred_techniques, ultra_expensive_techniques = _partition_techniques(
+        technique_order
+    )
     cells = list(grid.cells)
     steps: list[Step] = []
 
@@ -192,7 +199,11 @@ def solve(
             )
 
         progress = False
-        for technique_group in (primary_techniques, deferred_techniques):
+        for technique_group in (
+            primary_techniques,
+            deferred_techniques,
+            ultra_expensive_techniques,
+        ):
             if not technique_group:
                 continue
             for technique in technique_group:
@@ -385,15 +396,22 @@ def _resolve_techniques(
 
 def _partition_techniques(
     techniques: tuple[TechniqueSpec, ...],
-) -> tuple[tuple[TechniqueSpec, ...], tuple[TechniqueSpec, ...]]:
+) -> tuple[
+    tuple[TechniqueSpec, ...],
+    tuple[TechniqueSpec, ...],
+    tuple[TechniqueSpec, ...],
+]:
     primary: list[TechniqueSpec] = []
     deferred: list[TechniqueSpec] = []
+    ultra_expensive: list[TechniqueSpec] = []
     for technique in techniques:
-        if technique.name in _DEFERRED_TECHNIQUE_NAMES:
+        if technique.name in _ULTRA_EXPENSIVE_TECHNIQUE_NAMES:
+            ultra_expensive.append(technique)
+        elif technique.name in _DEFERRED_TECHNIQUE_NAMES:
             deferred.append(technique)
         else:
             primary.append(technique)
-    return tuple(primary), tuple(deferred)
+    return tuple(primary), tuple(deferred), tuple(ultra_expensive)
 
 
 def _normalize_candidates(grid: Grid, candidates: dict[int, set[int]]) -> dict[int, set[int]]:

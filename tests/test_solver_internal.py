@@ -22,13 +22,16 @@ class SolverInternalTests(unittest.TestCase):
         self.assertIn("Unknown technique", str(exc.exception))
 
     def test_partition_techniques_defers_expensive_rules(self) -> None:
-        resolved = _resolve_techniques(["finned_x_wing", "naked_single", "aic"])
-        primary, deferred = _partition_techniques(resolved)
+        resolved = _resolve_techniques(
+            ["franken_mutant_fish", "finned_x_wing", "naked_single", "aic"]
+        )
+        primary, deferred, ultra_expensive = _partition_techniques(resolved)
         self.assertEqual([tech.name for tech in primary], ["naked_single"])
         self.assertEqual(
             [tech.name for tech in deferred],
             ["finned_x_wing", "aic"],
         )
+        self.assertEqual([tech.name for tech in ultra_expensive], ["franken_mutant_fish"])
 
     def test_find_contradiction_detects_missing_candidate_entry(self) -> None:
         cells = [0] + [1] * 80
@@ -282,6 +285,76 @@ class SolverInternalTests(unittest.TestCase):
 
         self.assertEqual(result.status, SolveStatus.SOLVED)
         self.assertEqual(call_order[:2], ["naked_single", "finned_x_wing"])
+        self.assertEqual(len(result.steps), 1)
+        self.assertEqual(result.steps[0].technique, TechniqueName.FINNED_X_WING)
+
+    def test_solve_runs_ultra_expensive_after_deferred_pass_stalls(self) -> None:
+        puzzle = (
+            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
+        )
+        call_order: list[str] = []
+
+        def fake_franken(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("franken_mutant_fish")
+            return Step(technique=TechniqueName.FRANKEN_MUTANT_FISH, placements=[(80, 9)])
+
+        def fake_finned(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("finned_x_wing")
+            return None
+
+        def fake_naked(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("naked_single")
+            return None
+
+        with (
+            patch("sudoku_solver.solver.apply_franken_mutant_fish", side_effect=fake_franken),
+            patch("sudoku_solver.solver.apply_finned_x_wing", side_effect=fake_finned),
+            patch("sudoku_solver.solver.apply_naked_single", side_effect=fake_naked),
+        ):
+            result = solve(
+                parse_grid(puzzle),
+                techniques=["franken_mutant_fish", "finned_x_wing", "naked_single"],
+            )
+
+        self.assertEqual(result.status, SolveStatus.SOLVED)
+        self.assertEqual(
+            call_order[:3],
+            ["naked_single", "finned_x_wing", "franken_mutant_fish"],
+        )
+        self.assertEqual(len(result.steps), 1)
+        self.assertEqual(result.steps[0].technique, TechniqueName.FRANKEN_MUTANT_FISH)
+
+    def test_solve_skips_ultra_expensive_when_deferred_pass_progresses(self) -> None:
+        puzzle = (
+            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
+        )
+        call_order: list[str] = []
+
+        def fake_franken(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("franken_mutant_fish")
+            return Step(technique=TechniqueName.FRANKEN_MUTANT_FISH, placements=[(80, 9)])
+
+        def fake_finned(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("finned_x_wing")
+            return Step(technique=TechniqueName.FINNED_X_WING, placements=[(80, 9)])
+
+        def fake_naked(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("naked_single")
+            return None
+
+        with (
+            patch("sudoku_solver.solver.apply_franken_mutant_fish", side_effect=fake_franken),
+            patch("sudoku_solver.solver.apply_finned_x_wing", side_effect=fake_finned),
+            patch("sudoku_solver.solver.apply_naked_single", side_effect=fake_naked),
+        ):
+            result = solve(
+                parse_grid(puzzle),
+                techniques=["franken_mutant_fish", "finned_x_wing", "naked_single"],
+            )
+
+        self.assertEqual(result.status, SolveStatus.SOLVED)
+        self.assertEqual(call_order[:2], ["naked_single", "finned_x_wing"])
+        self.assertNotIn("franken_mutant_fish", call_order)
         self.assertEqual(len(result.steps), 1)
         self.assertEqual(result.steps[0].technique, TechniqueName.FINNED_X_WING)
 
