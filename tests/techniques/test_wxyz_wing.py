@@ -76,7 +76,7 @@ class WxyzWingTechniqueTests(unittest.TestCase):
         self.assertEqual(step.eliminations, [(3, 2)])
         self.assertIn("type 2", step.rationale)
 
-    def test_apply_wxyz_wing_legacy_three_holder_path(self) -> None:
+    def test_apply_wxyz_wing_compatibility_three_holder_path(self) -> None:
         grid = parse_grid("." * 81)
         candidates = {
             0: {1, 2},
@@ -111,7 +111,7 @@ class WxyzWingTechniqueTests(unittest.TestCase):
         self.assertIsNotNone(step)
         assert step is not None
         self.assertEqual(step.eliminations, [(11, 1)])
-        self.assertIn("legacy 3-holder", step.rationale)
+        self.assertIn("compatibility 3-holder", step.rationale)
 
     def test_apply_wxyz_wing_type2_skips_single_holder_digit(self) -> None:
         grid = parse_grid("." * 81)

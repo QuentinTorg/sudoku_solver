@@ -36,12 +36,12 @@ class DeathBlossomElimination:
 
     @property
     def first_petal(self) -> int:
-        """Compatibility accessor for legacy 2-petal tests/callers."""
+        """Compatibility accessor for two-petal tests/callers."""
         return self.petals[0]
 
     @property
     def second_petal(self) -> int:
-        """Compatibility accessor for legacy 2-petal tests/callers."""
+        """Compatibility accessor for two-petal tests/callers."""
         return self.petals[1]
 
 
@@ -362,7 +362,7 @@ def find_death_blossom_elimination(
                             eliminations=tuple(sorted(eliminations)),
                         )
 
-        # Legacy restricted two-petal form.
+        # Compatibility fallback for the classic two-petal form.
         for first_petal, second_petal in combinations(petal_cells, 2):
             first_options = candidates[first_petal]
             second_options = candidates[second_petal]

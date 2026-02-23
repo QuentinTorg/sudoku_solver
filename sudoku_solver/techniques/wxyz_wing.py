@@ -91,8 +91,8 @@ def apply_wxyz_wing(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
                         grid_snapshot_after=format_grid(grid),
                     )
 
-        # Legacy compatibility: retain the previous restricted implementation's
-        # 3-holder elimination behavior when generalized forms do not trigger.
+        # Compatibility fallback: retain prior 3-holder behavior for cases
+        # where generalized type-1/type-2 forms do not trigger.
         for target_digit in sorted(union_digits):
             holders = holders_by_digit[target_digit]
             if len(holders) != 3:
@@ -110,7 +110,7 @@ def apply_wxyz_wing(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
                     eliminations=sorted(eliminations),
                     affected_units=[],
                     rationale=(
-                        f"WXYZ-Wing legacy 3-holder pattern on cells {sorted(wing_cells)} "
+                        f"WXYZ-Wing compatibility 3-holder pattern on cells {sorted(wing_cells)} "
                         f"eliminates digit {target_digit}."
                     ),
                     grid_snapshot_after=format_grid(grid),
