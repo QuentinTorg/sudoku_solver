@@ -8,6 +8,7 @@ from sudoku_solver.solver import (
     _classify_difficulty,
     _find_contradiction,
     _find_unique_solution,
+    _partition_techniques,
     _resolve_techniques,
     solve,
 )
@@ -19,6 +20,15 @@ class SolverInternalTests(unittest.TestCase):
         with self.assertRaises(ValueError) as exc:
             _resolve_techniques(["unknown_technique"])
         self.assertIn("Unknown technique", str(exc.exception))
+
+    def test_partition_techniques_defers_expensive_rules(self) -> None:
+        resolved = _resolve_techniques(["finned_x_wing", "naked_single", "aic"])
+        primary, deferred = _partition_techniques(resolved)
+        self.assertEqual([tech.name for tech in primary], ["naked_single"])
+        self.assertEqual(
+            [tech.name for tech in deferred],
+            ["finned_x_wing", "aic"],
+        )
 
     def test_find_contradiction_detects_missing_candidate_entry(self) -> None:
         cells = [0] + [1] * 80
@@ -218,6 +228,62 @@ class SolverInternalTests(unittest.TestCase):
         self.assertEqual(result.status, SolveStatus.STALLED)
         self.assertEqual(len(result.steps), 0)
         self.assertIn("Fallback search is disabled.", result.message)
+
+    def test_solve_prioritizes_primary_pass_before_deferred(self) -> None:
+        puzzle = (
+            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
+        )
+        call_order: list[str] = []
+
+        def fake_finned(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("finned_x_wing")
+            return Step(technique=TechniqueName.FINNED_X_WING, placements=[(80, 9)])
+
+        def fake_naked(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("naked_single")
+            return Step(technique=TechniqueName.NAKED_SINGLE, placements=[(80, 9)])
+
+        with (
+            patch("sudoku_solver.solver.apply_finned_x_wing", side_effect=fake_finned),
+            patch("sudoku_solver.solver.apply_naked_single", side_effect=fake_naked),
+        ):
+            result = solve(
+                parse_grid(puzzle),
+                techniques=["finned_x_wing", "naked_single"],
+            )
+
+        self.assertEqual(result.status, SolveStatus.SOLVED)
+        self.assertEqual(call_order, ["naked_single"])
+        self.assertEqual(len(result.steps), 1)
+        self.assertEqual(result.steps[0].technique, TechniqueName.NAKED_SINGLE)
+
+    def test_solve_uses_deferred_pass_after_primary_stalls(self) -> None:
+        puzzle = (
+            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
+        )
+        call_order: list[str] = []
+
+        def fake_finned(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("finned_x_wing")
+            return Step(technique=TechniqueName.FINNED_X_WING, placements=[(80, 9)])
+
+        def fake_naked(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
+            call_order.append("naked_single")
+            return None
+
+        with (
+            patch("sudoku_solver.solver.apply_finned_x_wing", side_effect=fake_finned),
+            patch("sudoku_solver.solver.apply_naked_single", side_effect=fake_naked),
+        ):
+            result = solve(
+                parse_grid(puzzle),
+                techniques=["finned_x_wing", "naked_single"],
+            )
+
+        self.assertEqual(result.status, SolveStatus.SOLVED)
+        self.assertEqual(call_order[:2], ["naked_single", "finned_x_wing"])
+        self.assertEqual(len(result.steps), 1)
+        self.assertEqual(result.steps[0].technique, TechniqueName.FINNED_X_WING)
 
 
 if __name__ == "__main__":

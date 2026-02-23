@@ -551,6 +551,9 @@ Performance note:
 The heaviest techniques are intentionally kept out of default order and are
 available via explicit API technique selection. Enabling all advanced
 techniques increases solve power but can be significantly slower.
+Solver execution also uses a two-pass scheduler: non-deferred techniques are
+attempted first each iteration, and deferred expensive techniques run only
+after that primary pass stalls.
 
 ## Result Model
 

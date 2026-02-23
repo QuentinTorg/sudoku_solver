@@ -1,5 +1,8 @@
 """Main solver orchestration loop."""
 
+from collections.abc import Callable
+from dataclasses import dataclass
+
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
 from sudoku_solver.techniques import (
@@ -54,6 +57,16 @@ from sudoku_solver.types import (
     TechniqueName,
 )
 
+TechniqueFunc = Callable[[Grid, dict[int, set[int]]], Step | None]
+
+
+@dataclass(frozen=True, slots=True)
+class TechniqueSpec:
+    """Configured technique entry used by the scheduling loop."""
+
+    name: str
+    func: TechniqueFunc
+
 _HIGH_RISK_TECHNIQUES = {
     TechniqueName.XY_WING,
     TechniqueName.XYZ_WING,
@@ -85,6 +98,37 @@ _HIGH_RISK_TECHNIQUES = {
     TechniqueName.SASHIMI_FISH,
 }
 
+# Very expensive techniques are deferred until cheaper passes stall in the
+# current solve iteration. This reduces repeated high-cost scans.
+_DEFERRED_TECHNIQUE_NAMES = {
+    "jellyfish",
+    "finned_x_wing",
+    "finned_swordfish",
+    "empty_rectangle",
+    "remote_pairs",
+    "two_string_kite",
+    "skyscraper",
+    "unique_rectangle",
+    "simple_coloring",
+    "three_d_medusa",
+    "aic",
+    "grouped_aic",
+    "nice_loops",
+    "x_cycles",
+    "xy_chain",
+    "als_xz",
+    "sue_de_coq",
+    "als_chains",
+    "death_blossom",
+    "uniqueness_expansions",
+    "fireworks",
+    "wxyz_wing",
+    "exocet",
+    "sue_de_coq_full",
+    "kraken_fish",
+    "sashimi_fish",
+}
+
 
 def solve(
     grid: Grid,
@@ -94,6 +138,7 @@ def solve(
 ) -> SolveResult:
     """Solve a Sudoku grid using configured human techniques."""
     technique_order = _resolve_techniques(techniques)
+    primary_techniques, deferred_techniques = _partition_techniques(technique_order)
     cells = list(grid.cells)
     steps: list[Step] = []
 
@@ -141,37 +186,42 @@ def solve(
             )
 
         progress = False
-        for technique in technique_order:
-            step = technique(current_grid, candidates)
-            if step is None:
+        for technique_group in (primary_techniques, deferred_techniques):
+            if not technique_group:
                 continue
+            for technique in technique_group:
+                step = technique.func(current_grid, candidates)
+                if step is None:
+                    continue
 
-            if step.technique in _HIGH_RISK_TECHNIQUES and not _step_preserves_solution(
-                cells, candidates, step
-            ):
-                continue
+                if step.technique in _HIGH_RISK_TECHNIQUES and not _step_preserves_solution(
+                    cells, candidates, step
+                ):
+                    continue
 
-            changed, error = _apply_step(cells, candidates, step)
-            if error is not None:
-                invalid_grid = Grid(cells=tuple(cells))
-                return SolveResult(
-                    status=SolveStatus.INVALID,
-                    grid=invalid_grid,
-                    grid_string=format_grid(invalid_grid),
-                    steps=steps,
-                    message=error,
-                    technique_counts=_count_techniques(steps),
-                    difficulty=DifficultyRating.UNSOLVED,
-                    used_fallback_search=False,
-                )
-            if not changed:
-                continue
+                changed, error = _apply_step(cells, candidates, step)
+                if error is not None:
+                    invalid_grid = Grid(cells=tuple(cells))
+                    return SolveResult(
+                        status=SolveStatus.INVALID,
+                        grid=invalid_grid,
+                        grid_string=format_grid(invalid_grid),
+                        steps=steps,
+                        message=error,
+                        technique_counts=_count_techniques(steps),
+                        difficulty=DifficultyRating.UNSOLVED,
+                        used_fallback_search=False,
+                    )
+                if not changed:
+                    continue
 
-            updated_grid = Grid(cells=tuple(cells))
-            step.grid_snapshot_after = format_grid(updated_grid)
-            steps.append(step)
-            progress = True
-            break
+                updated_grid = Grid(cells=tuple(cells))
+                step.grid_snapshot_after = format_grid(updated_grid)
+                steps.append(step)
+                progress = True
+                break
+            if progress:
+                break
 
         if not progress:
             if not allow_fallback_search:
@@ -246,7 +296,7 @@ def solve_from_string(
 
 def _resolve_techniques(
     techniques: list[str] | None,
-) -> tuple:
+) -> tuple[TechniqueSpec, ...]:
     available = {
         "naked_single": apply_naked_single,
         "hidden_single": apply_hidden_single,
@@ -290,40 +340,52 @@ def _resolve_techniques(
         "two_string_kite": apply_two_string_kite,
         "w_wing": apply_w_wing,
     }
-    default_order = (
-        apply_naked_single,
-        apply_hidden_single,
-        apply_locked_candidates,
-        apply_naked_pair,
-        apply_hidden_pair,
-        apply_naked_triple,
-        apply_hidden_triple,
-        apply_naked_quad,
-        apply_hidden_quad,
-        apply_xy_wing,
-        apply_xyz_wing,
-        apply_x_wing,
-        apply_w_wing,
-        apply_swordfish,
-        apply_jellyfish,
-        apply_bug_plus_one,
-        apply_simple_coloring,
-        apply_three_d_medusa,
-        apply_aic,
-        apply_x_cycles,
-        apply_xy_chain,
-    )
+    default_order = [
+        "naked_single",
+        "hidden_single",
+        "locked_candidates",
+        "naked_pair",
+        "hidden_pair",
+        "naked_triple",
+        "hidden_triple",
+        "naked_quad",
+        "hidden_quad",
+        "xy_wing",
+        "xyz_wing",
+        "x_wing",
+        "w_wing",
+        "swordfish",
+        "jellyfish",
+        "bug_plus_one",
+        "simple_coloring",
+        "three_d_medusa",
+        "aic",
+        "x_cycles",
+        "xy_chain",
+    ]
 
-    if techniques is None:
-        return default_order
+    selected = default_order if techniques is None else techniques
 
-    resolved = []
-    for name in techniques:
+    resolved: list[TechniqueSpec] = []
+    for name in selected:
         if name not in available:
             msg = f"Unknown technique: {name}"
             raise ValueError(msg)
-        resolved.append(available[name])
+        resolved.append(TechniqueSpec(name=name, func=available[name]))
     return tuple(resolved)
+
+
+def _partition_techniques(
+    techniques: tuple[TechniqueSpec, ...],
+) -> tuple[tuple[TechniqueSpec, ...], tuple[TechniqueSpec, ...]]:
+    primary: list[TechniqueSpec] = []
+    deferred: list[TechniqueSpec] = []
+    for technique in techniques:
+        if technique.name in _DEFERRED_TECHNIQUE_NAMES:
+            deferred.append(technique)
+        else:
+            primary.append(technique)
+    return tuple(primary), tuple(deferred)
 
 
 def _normalize_candidates(grid: Grid, candidates: dict[int, set[int]]) -> dict[int, set[int]]:
