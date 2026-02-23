@@ -37,7 +37,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   18. AIC (expanded)
   19. X-Cycles
   20. XY-Chain
-  21. ALS-XZ (restricted)
+  21. ALS-XZ (expanded)
   22. Sue de Coq (restricted)
   23. BUG+1
   24. Finned X-Wing / Sashimi X-Wing
@@ -49,7 +49,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   30. Unique Rectangle
   31. Grouped AIC (expanded)
   32. Nice Loops (expanded)
-  33. ALS Chains (restricted)
+  33. ALS Chains (expanded)
   34. Death Blossom (restricted)
   35. Uniqueness Expansions (restricted)
   36. Fireworks (restricted)
@@ -497,10 +497,11 @@ Eliminate `3` from `r4c4`.
   A chain of bivalue cells links endpoint candidates through alternating digits.
   Shared endpoint digit is removed from common peers of the chain endpoints.
   Use when XY-Wing is insufficient and longer bivalue chains exist.
-- ALS-XZ (restricted):
+- ALS-XZ (expanded):
   Two almost-locked sets share a restricted common candidate and another
   elimination candidate.
   That shared elimination candidate can be removed from cells seeing both ALSs.
+  The expanded implementation now scans larger ALS sizes (up to 4 cells).
   Use late on advanced stalled states.
 - Sue de Coq (restricted):
   A box-line intersection is split into disjoint line-only and box-only digit
@@ -521,10 +522,10 @@ Eliminate `3` from `r4c4`.
   The implementation uses deeper loop search and includes discontinuous
   same-cell loop eliminations from the shared AIC engine.
   Use when shorter chains no longer progress.
-- ALS Chains (restricted):
+- ALS Chains (expanded):
   Links multiple almost-locked sets to propagate eliminations across units.
-  The current implementation adds restricted 3-ALS and 4-ALS RCC-chain passes
-  and falls back to safe ALS-XZ-style reductions when no chain is found.
+  The expanded implementation supports 3-ALS/4-ALS RCC-chain passes,
+  adds ALS XY-Wing eliminations, and falls back to ALS-XZ-compatible reductions.
   Use in advanced ALS-rich states.
 - Forcing Chains (expanded):
   Branches on a bivalue pivot candidate and propagates branch consequences.

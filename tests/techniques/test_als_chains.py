@@ -76,6 +76,25 @@ class AlsChainsTechniqueTests(unittest.TestCase):
         self.assertEqual(step.technique.value, "als_chains")
         self.assertEqual(step.eliminations, [(2, 4)])
 
+    def test_apply_als_chains_supports_als_xy_wing_fallback(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 9},
+            1: {2, 9},
+            9: {1, 4},
+            10: {4, 7},
+            19: {2, 5},
+            20: {5, 7},
+            11: {7, 8},
+        }
+
+        step = apply_als_chains(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "als_chains")
+        self.assertEqual(step.eliminations, [(11, 7)])
+
 
 if __name__ == "__main__":
     unittest.main()

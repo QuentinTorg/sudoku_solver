@@ -1,4 +1,4 @@
-"""ALS-XZ technique (restricted implementation).
+"""ALS-XZ technique (expanded implementation).
 
 Meaning:
     Two almost-locked sets (ALS) with a restricted common candidate can force
@@ -14,7 +14,7 @@ from sudoku_solver.types import Grid, Step, TechniqueName
 
 
 def apply_als_xz(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
-    """Apply restricted ALS-XZ elimination, else return None."""
+    """Apply an expanded ALS-XZ elimination, else return None."""
     if not candidates:
         return None
 

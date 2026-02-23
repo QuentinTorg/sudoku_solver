@@ -8,6 +8,7 @@ from sudoku_solver.engines.als_engine import (
     _target_digit_eliminations,
     find_als,
     find_als_chain_elimination,
+    find_als_xy_wing_elimination,
     find_als_xz_elimination,
     find_death_blossom_elimination,
 )
@@ -30,6 +31,21 @@ class AlsEngineTests(unittest.TestCase):
         )
         self.assertTrue(
             any(als.cells == (9, 10) and als.digits == frozenset({2, 5, 8}) for als in all_als)
+        )
+
+    def test_find_als_supports_size_four_when_requested(self) -> None:
+        candidates = {
+            0: {1, 2},
+            1: {2, 3},
+            2: {3, 4},
+            3: {4, 5},
+        }
+        all_als = find_als(candidates, sizes=(4,))
+        self.assertTrue(
+            any(
+                als.cells == (0, 1, 2, 3) and als.digits == frozenset({1, 2, 3, 4, 5})
+                for als in all_als
+            )
         )
 
     def test_find_als_xz_elimination_returns_expected_batch(self) -> None:
@@ -136,6 +152,24 @@ class AlsEngineTests(unittest.TestCase):
         assert elimination is not None
         self.assertEqual(elimination.target_digit, 4)
         self.assertEqual(elimination.eliminations, ((2, 4),))
+
+    def test_find_als_xy_wing_elimination_returns_expected_batch(self) -> None:
+        candidates = {
+            0: {1, 9},
+            1: {2, 9},
+            9: {1, 4},
+            10: {4, 7},
+            19: {2, 5},
+            20: {5, 7},
+            11: {7, 8},
+        }
+
+        elimination = find_als_xy_wing_elimination(candidates)
+
+        self.assertIsNotNone(elimination)
+        assert elimination is not None
+        self.assertEqual(elimination.target_digit, 7)
+        self.assertEqual(elimination.eliminations, ((11, 7),))
 
     def test_death_blossom_properties_expose_first_two_petals(self) -> None:
         elimination = DeathBlossomElimination(

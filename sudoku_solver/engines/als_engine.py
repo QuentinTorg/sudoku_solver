@@ -45,12 +45,19 @@ class DeathBlossomElimination:
         return self.petals[1]
 
 
-def find_als(candidates: dict[int, set[int]]) -> list[Als]:
-    """Enumerate small ALS patterns from rows/columns/boxes."""
+def find_als(
+    candidates: dict[int, set[int]],
+    *,
+    sizes: tuple[int, ...] = (2, 3),
+) -> list[Als]:
+    """Enumerate ALS patterns from rows/columns/boxes for selected cell counts."""
+    target_sizes = tuple(sorted(set(sizes)))
     results: list[Als] = []
     for unit_name, unit_cells in all_units():
         unsolved = [cell_index for cell_index in unit_cells if cell_index in candidates]
-        for size in (2, 3):
+        for size in target_sizes:
+            if size <= 1:
+                continue
             if len(unsolved) < size:
                 continue
             for subset in combinations(unsolved, size):
@@ -68,8 +75,8 @@ def find_als(candidates: dict[int, set[int]]) -> list[Als]:
 
 
 def find_als_xz_elimination(candidates: dict[int, set[int]]) -> AlsElimination | None:
-    """Find one restricted ALS-XZ elimination."""
-    all_als = find_als(candidates)
+    """Find one expanded ALS-XZ elimination."""
+    all_als = find_als(candidates, sizes=(2, 3, 4))
     for first_als, second_als in combinations(all_als, 2):
         if set(first_als.cells) & set(second_als.cells):
             continue
@@ -116,8 +123,8 @@ def find_als_xz_elimination(candidates: dict[int, set[int]]) -> AlsElimination |
 
 
 def find_als_chain_elimination(candidates: dict[int, set[int]]) -> AlsElimination | None:
-    """Find one restricted ALS RCC-chain elimination (3- or 4-ALS)."""
-    all_als = find_als(candidates)
+    """Find one expanded ALS RCC-chain elimination (3- or 4-ALS)."""
+    all_als = find_als(candidates, sizes=(2, 3, 4))
     if len(all_als) < 3:
         return None
 
@@ -241,6 +248,65 @@ def find_als_chain_elimination(candidates: dict[int, set[int]]) -> AlsEliminatio
                                 end_als.unit_name,
                             ),
                         )
+
+    return None
+
+
+def find_als_xy_wing_elimination(candidates: dict[int, set[int]]) -> AlsElimination | None:
+    """Find one ALS XY-Wing elimination using three pairwise disjoint ALSs."""
+    all_als = find_als(candidates, sizes=(2, 3, 4))
+    if len(all_als) < 3:
+        return None
+
+    for hinge_index, hinge in enumerate(all_als):
+        for first_index, first in enumerate(all_als):
+            if first_index == hinge_index or not _als_cells_disjoint(hinge, first):
+                continue
+            shared_first = sorted(hinge.digits & first.digits)
+            for first_link_digit in shared_first:
+                if not _restricted_link_exists(candidates, hinge, first, first_link_digit):
+                    continue
+
+                for second_index, second in enumerate(all_als):
+                    if second_index in {hinge_index, first_index}:
+                        continue
+                    if not _als_cells_disjoint(hinge, second):
+                        continue
+                    if not _als_cells_disjoint(first, second):
+                        continue
+
+                    shared_second = sorted((hinge.digits & second.digits) - {first_link_digit})
+                    for second_link_digit in shared_second:
+                        if not _restricted_link_exists(
+                            candidates,
+                            hinge,
+                            second,
+                            second_link_digit,
+                        ):
+                            continue
+
+                        target_digits = sorted(
+                            (first.digits & second.digits) - {first_link_digit, second_link_digit}
+                        )
+                        for target_digit in target_digits:
+                            eliminations = _target_digit_eliminations(
+                                candidates,
+                                first,
+                                second,
+                                target_digit,
+                            )
+                            if not eliminations:
+                                continue
+                            return AlsElimination(
+                                restricted_digit=first_link_digit,
+                                target_digit=target_digit,
+                                eliminations=tuple(sorted(eliminations)),
+                                affected_units=(
+                                    hinge.unit_name,
+                                    first.unit_name,
+                                    second.unit_name,
+                                ),
+                            )
 
     return None
 
