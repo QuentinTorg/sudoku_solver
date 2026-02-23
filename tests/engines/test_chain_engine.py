@@ -50,6 +50,20 @@ class ChainEngineTests(unittest.TestCase):
 
         self.assertEqual(eliminations, [(1, 5), (5, 5), (30, 5)])
 
+    def test_find_aic_elimination_handles_same_cell_discontinuity(self) -> None:
+        candidates = {
+            0: {1, 2, 3},
+            1: {1, 2},
+            10: {2, 4},
+        }
+
+        elimination = find_aic_elimination(candidates, max_chain_nodes=8)
+
+        self.assertIsNotNone(elimination)
+        assert elimination is not None
+        self.assertEqual(elimination.pattern, "same_cell_discontinuity")
+        self.assertEqual(elimination.eliminations, ((0, 3),))
+
     def test_component_edge_count_and_coloring_helpers(self) -> None:
         adjacency = {
             1: {3},

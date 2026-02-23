@@ -28,6 +28,7 @@ class AicElimination:
     start_cell: int
     end_cell: int
     eliminations: tuple[tuple[int, int], ...]
+    pattern: str = "endpoint_peer"
 
 
 @dataclass(slots=True, frozen=True)
@@ -97,6 +98,7 @@ def find_aic_elimination(
     candidates: dict[int, set[int]],
     *,
     max_chain_nodes: int = 8,
+    allow_same_cell_discontinuity: bool = True,
 ) -> AicElimination | None:
     """Find one restricted AIC elimination, if available."""
     strong_graph, weak_graph = build_aic_link_graphs(candidates)
@@ -114,6 +116,7 @@ def find_aic_elimination(
                 path=[start, next_node],
                 last_edge_type="S",
                 max_chain_nodes=max_chain_nodes,
+                allow_same_cell_discontinuity=allow_same_cell_discontinuity,
             )
             if elimination is not None:
                 return elimination
@@ -131,6 +134,7 @@ def _search_aic_chain(
     path: list[Node],
     last_edge_type: str,
     max_chain_nodes: int,
+    allow_same_cell_discontinuity: bool,
 ) -> AicElimination | None:
     if len(path) > max_chain_nodes:
         return None
@@ -156,6 +160,29 @@ def _search_aic_chain(
                 start_cell=start[0],
                 end_cell=current[0],
                 eliminations=eliminations,
+                pattern="endpoint_peer",
+            )
+
+    if (
+        allow_same_cell_discontinuity
+        and len(path) >= 5
+        and last_edge_type == "W"
+        and start[0] == current[0]
+        and start[1] != current[1]
+        and current in weak_graph.get(start, set())
+    ):
+        extras = [
+            digit
+            for digit in sorted(candidates.get(start[0], set()))
+            if digit not in {start[1], current[1]}
+        ]
+        if extras:
+            return AicElimination(
+                digit=start[1],
+                start_cell=start[0],
+                end_cell=current[0],
+                eliminations=tuple((start[0], digit) for digit in extras),
+                pattern="same_cell_discontinuity",
             )
 
     next_graph = weak_graph if last_edge_type == "S" else strong_graph
@@ -172,6 +199,7 @@ def _search_aic_chain(
             path=path + [next_node],
             last_edge_type=next_edge_type,
             max_chain_nodes=max_chain_nodes,
+            allow_same_cell_discontinuity=allow_same_cell_discontinuity,
         )
         if elimination is not None:
             return elimination

@@ -34,7 +34,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   15. Jellyfish
   16. Simple Coloring
   17. 3D Medusa (restricted)
-  18. AIC (restricted)
+  18. AIC (expanded)
   19. X-Cycles
   20. XY-Chain
   21. ALS-XZ (restricted)
@@ -47,8 +47,8 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   28. Two-String Kite
   29. Skyscraper
   30. Unique Rectangle
-  31. Grouped AIC (restricted)
-  32. Nice Loops (restricted)
+  31. Grouped AIC (expanded)
+  32. Nice Loops (expanded)
   33. ALS Chains (restricted)
   34. Death Blossom (restricted)
   35. Uniqueness Expansions (restricted)
@@ -58,6 +58,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   39. Sue de Coq Full/Generalized (restricted)
   40. Kraken Fish (restricted)
   41. Sashimi Fish (restricted)
+  42. Forcing Chains / Nets (restricted)
 - Default technique order:
   Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
   `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
@@ -67,7 +68,8 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   `nice_loops`, `als_chains`, `death_blossom`, `uniqueness_expansions`,
   `fireworks`, `wxyz_wing`, `exocet`, `sue_de_coq_full`, `kraken_fish`,
   `sashimi_fish`, `finned_x_wing`, `finned_swordfish`, `empty_rectangle`,
-  `remote_pairs`, `two_string_kite`, `skyscraper`, `unique_rectangle`) are
+  `remote_pairs`, `two_string_kite`, `skyscraper`, `unique_rectangle`,
+  `forcing_chains`) are
   available through API `techniques=[...]` selection.
 - Advanced-technique safety:
   High-risk eliminations are conservatively validated against solution
@@ -475,10 +477,10 @@ Eliminate `3` from `r4c4`.
   Candidate nodes are two-colored using strong links across cells and units.
   Color contradictions and color-trap interactions remove impossible candidates.
   Use on very hard stalled puzzles with dense conjugate/bivalue structure.
-- AIC (restricted):
+- AIC (expanded):
   Alternating strong/weak links form inference chains across candidates.
-  When chain endpoints force a shared digit relation, common-peer eliminations
-  become possible.
+  In addition to endpoint peer eliminations, the implementation now includes
+  discontinuous same-cell loop handling that removes non-endpoint digits.
   Use on expert-level stalled states after simpler chain techniques.
 - X-Cycles:
   Alternating inference loops for one digit create cycle-based contradictions.
@@ -502,13 +504,15 @@ Eliminate `3` from `r4c4`.
   In a near-BUG state (all bivalue except one tri-value cell), parity reveals
   a forced digit in that exceptional cell.
   Use very late when the grid is almost solved.
-- Grouped AIC (restricted):
+- Grouped AIC (expanded):
   Extends alternating inference chains with grouped-node style links.
-  The current implementation focuses on safe AIC-compatible reductions.
+  The implementation now uses deeper chain bounds and includes discontinuous
+  same-cell loop eliminations from the shared AIC engine.
   Use for chain-heavy expert stalls.
-- Nice Loops (restricted):
+- Nice Loops (expanded):
   Inference loops can force candidates true/false through contradiction logic.
-  The current implementation reuses safe AIC-loop eliminations.
+  The implementation uses deeper loop search and includes discontinuous
+  same-cell loop eliminations from the shared AIC engine.
   Use when shorter chains no longer progress.
 - ALS Chains (restricted):
   Links multiple almost-locked sets to propagate eliminations across units.
