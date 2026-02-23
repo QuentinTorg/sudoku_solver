@@ -3,6 +3,8 @@
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
 from sudoku_solver.techniques import (
+    apply_als_xz,
+    apply_bug_plus_one,
     apply_empty_rectangle,
     apply_finned_swordfish,
     apply_finned_x_wing,
@@ -17,12 +19,16 @@ from sudoku_solver.techniques import (
     apply_naked_single,
     apply_naked_triple,
     apply_remote_pairs,
+    apply_simple_coloring,
     apply_skyscraper,
+    apply_sue_de_coq,
     apply_swordfish,
     apply_two_string_kite,
     apply_unique_rectangle,
     apply_w_wing,
+    apply_x_cycles,
     apply_x_wing,
+    apply_xy_chain,
     apply_xy_wing,
     apply_xyz_wing,
 )
@@ -46,6 +52,11 @@ _HIGH_RISK_TECHNIQUES = {
     TechniqueName.TWO_STRING_KITE,
     TechniqueName.SKYSCRAPER,
     TechniqueName.UNIQUE_RECTANGLE,
+    TechniqueName.SIMPLE_COLORING,
+    TechniqueName.X_CYCLES,
+    TechniqueName.XY_CHAIN,
+    TechniqueName.ALS_XZ,
+    TechniqueName.SUE_DE_COQ,
 }
 
 
@@ -227,6 +238,12 @@ def _resolve_techniques(
         "swordfish": apply_swordfish,
         "finned_swordfish": apply_finned_swordfish,
         "jellyfish": apply_jellyfish,
+        "simple_coloring": apply_simple_coloring,
+        "x_cycles": apply_x_cycles,
+        "xy_chain": apply_xy_chain,
+        "als_xz": apply_als_xz,
+        "sue_de_coq": apply_sue_de_coq,
+        "bug_plus_one": apply_bug_plus_one,
         "empty_rectangle": apply_empty_rectangle,
         "remote_pairs": apply_remote_pairs,
         "unique_rectangle": apply_unique_rectangle,
@@ -250,6 +267,10 @@ def _resolve_techniques(
         apply_w_wing,
         apply_swordfish,
         apply_jellyfish,
+        apply_bug_plus_one,
+        apply_simple_coloring,
+        apply_x_cycles,
+        apply_xy_chain,
     )
 
     if techniques is None:
@@ -485,6 +506,11 @@ def _classify_difficulty(
         TechniqueName.JELLYFISH in techniques_used
         or TechniqueName.FINNED_SWORDFISH in techniques_used
         or TechniqueName.FINNED_X_WING in techniques_used
+        or TechniqueName.SIMPLE_COLORING in techniques_used
+        or TechniqueName.X_CYCLES in techniques_used
+        or TechniqueName.XY_CHAIN in techniques_used
+        or TechniqueName.ALS_XZ in techniques_used
+        or TechniqueName.SUE_DE_COQ in techniques_used
     ):
         return DifficultyRating.EXPERT
     if (
@@ -496,6 +522,7 @@ def _classify_difficulty(
         or TechniqueName.HIDDEN_QUAD in techniques_used
         or TechniqueName.EMPTY_RECTANGLE in techniques_used
         or TechniqueName.REMOTE_PAIRS in techniques_used
+        or TechniqueName.BUG_PLUS_ONE in techniques_used
         or TechniqueName.TWO_STRING_KITE in techniques_used
         or TechniqueName.SKYSCRAPER in techniques_used
         or TechniqueName.UNIQUE_RECTANGLE in techniques_used

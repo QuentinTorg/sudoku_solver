@@ -32,19 +32,27 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   13. W-Wing
   14. Swordfish
   15. Jellyfish
-  16. Finned X-Wing / Sashimi X-Wing
-  17. Finned Swordfish
-  18. Empty Rectangle
-  19. Remote Pairs
-  20. Two-String Kite
-  21. Skyscraper
-  22. Unique Rectangle
+  16. Simple Coloring
+  17. X-Cycles
+  18. XY-Chain
+  19. ALS-XZ (restricted)
+  20. Sue de Coq (restricted)
+  21. BUG+1
+  22. Finned X-Wing / Sashimi X-Wing
+  23. Finned Swordfish
+  24. Empty Rectangle
+  25. Remote Pairs
+  26. Two-String Kite
+  27. Skyscraper
+  28. Unique Rectangle
 - Default technique order:
   Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
-  `naked_quad`, `hidden_quad`, `swordfish`, and `jellyfish` run by default.
-  More expensive techniques (`finned_x_wing`, `finned_swordfish`,
-  `empty_rectangle`, `remote_pairs`, `two_string_kite`, `skyscraper`,
-  `unique_rectangle`) are available through API `techniques=[...]` selection.
+  `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
+  `simple_coloring`, `x_cycles`, and `xy_chain` run by default.
+  More expensive techniques (`als_xz`, `sue_de_coq`, `finned_x_wing`,
+  `finned_swordfish`, `empty_rectangle`, `remote_pairs`, `two_string_kite`,
+  `skyscraper`, `unique_rectangle`) are available through API
+  `techniques=[...]` selection.
 - Advanced-technique safety:
   High-risk eliminations are conservatively validated against solution
   existence checks before they are applied, reducing false-positive
@@ -443,6 +451,32 @@ Eliminate `3` from `r4c4`.
   A chain of bivalue cells using the same pair (for example `{1,9}`).
   Cells seeing opposite chain colors can eliminate both pair digits.
   Use on advanced chain-heavy puzzles after simpler pair/wing methods.
+- Simple Coloring:
+  A single digit is colored across strong links with two alternating colors.
+  Color-wrap and color-trap conditions produce candidate eliminations.
+  Use after fish/wing techniques when single-digit chains are present.
+- X-Cycles:
+  Alternating inference loops for one digit create cycle-based contradictions.
+  Those contradictions force eliminations for that digit.
+  Use on hard puzzles with dense conjugate-link networks.
+- XY-Chain:
+  A chain of bivalue cells links endpoint candidates through alternating digits.
+  Shared endpoint digit is removed from common peers of the chain endpoints.
+  Use when XY-Wing is insufficient and longer bivalue chains exist.
+- ALS-XZ (restricted):
+  Two almost-locked sets share a restricted common candidate and another
+  elimination candidate.
+  That shared elimination candidate can be removed from cells seeing both ALSs.
+  Use late on advanced stalled states.
+- Sue de Coq (restricted):
+  A box-line intersection is split into disjoint line-only and box-only digit
+  groups.
+  This allows eliminations in the line and box outside those selected subsets.
+  Use on hard intersection-heavy grids.
+- BUG+1:
+  In a near-BUG state (all bivalue except one tri-value cell), parity reveals
+  a forced digit in that exceptional cell.
+  Use very late when the grid is almost solved.
 
 Performance note:
 The heaviest techniques are intentionally kept out of default order and are
@@ -505,6 +539,12 @@ all_techniques_result = solve_from_string(
         "w_wing",
         "swordfish",
         "jellyfish",
+        "simple_coloring",
+        "x_cycles",
+        "xy_chain",
+        "als_xz",
+        "sue_de_coq",
+        "bug_plus_one",
         "finned_x_wing",
         "finned_swordfish",
         "empty_rectangle",
