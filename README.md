@@ -283,6 +283,17 @@ Notes:
   - Dataset regression on `puzzles/top95.txt` and `puzzles/top1465.txt`
   - Benchmark artifact generation
 
+## Future Work / Roadmap
+
+1. Add a CI performance guardrail that checks benchmark metrics against configured thresholds.
+2. Add a technique cost profiler report (call count, hit count, total/runtime averages) during benchmark runs.
+3. Make benchmark execution path usage explicit so local runs always target workspace code.
+4. Add machine-readable benchmark outputs (JSON/CSV) for run-to-run comparisons and automation.
+5. Clean up legacy/noise artifacts in the repo (for example stray coverage byproducts).
+6. Add a technique index table in `sudoku_solver/techniques/README.md` (family, complexity tier, status, expected cost).
+7. Continue clarifying fallback-search docs and examples as optional/non-default behavior.
+8. Add more property/invariant tests to harden solver correctness guarantees.
+
 ## Contributing
 
 1. Create a branch for your change.
