@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from time import perf_counter
 
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
@@ -62,6 +63,7 @@ from sudoku_solver.types import (
 )
 
 TechniqueFunc = Callable[[Grid, dict[int, set[int]]], Step | None]
+TechniqueAttemptHook = Callable[[str, float, bool], None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,6 +155,7 @@ def solve(
     *,
     techniques: list[str] | None = None,
     allow_fallback_search: bool = False,
+    technique_attempt_hook: TechniqueAttemptHook | None = None,
 ) -> SolveResult:
     """Solve a Sudoku grid using configured human techniques."""
     technique_order = _resolve_techniques(techniques)
@@ -214,7 +217,14 @@ def solve(
             if not technique_group:
                 continue
             for technique in technique_group:
+                attempt_start = perf_counter()
                 step = technique.func(current_grid, candidates)
+                if technique_attempt_hook is not None:
+                    technique_attempt_hook(
+                        technique.name,
+                        perf_counter() - attempt_start,
+                        step is not None,
+                    )
                 if step is None:
                     continue
 
@@ -308,6 +318,7 @@ def solve_from_string(
     *,
     techniques: list[str] | None = None,
     allow_fallback_search: bool = False,
+    technique_attempt_hook: TechniqueAttemptHook | None = None,
 ) -> SolveResult:
     """Parse and solve from puzzle string input."""
     grid = parse_grid(puzzle)
@@ -315,6 +326,7 @@ def solve_from_string(
         grid,
         techniques=techniques,
         allow_fallback_search=allow_fallback_search,
+        technique_attempt_hook=technique_attempt_hook,
     )
 
 

@@ -190,6 +190,8 @@ are configured through the Python API (`techniques=[...]`).
 python scripts/benchmark.py puzzles/top1465.txt
 python scripts/benchmark.py puzzles/top1465.txt --allow-fallback-search
 python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --progress-every 500
+python scripts/benchmark.py puzzles/top1465.txt --profile-techniques --top-techniques 20
+python scripts/benchmark.py puzzles/top1465.txt --output-json benchmark.json --output-csv benchmark.csv
 ```
 
 ## Input Format
