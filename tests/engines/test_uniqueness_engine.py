@@ -5,6 +5,7 @@ from sudoku_solver.engines.uniqueness_engine import (
     find_uniqueness_expansion_elimination,
     find_uniqueness_type2_elimination,
     find_uniqueness_type4_elimination,
+    find_uniqueness_type5_elimination,
     iter_rectangle_pair_patterns,
 )
 
@@ -82,6 +83,21 @@ class UniquenessEngineTests(unittest.TestCase):
         self.assertIsNotNone(elimination)
         assert elimination is not None
         self.assertEqual(elimination.kind, "ur_type4_restricted")
+        self.assertEqual(elimination.eliminations, ((0, 2), (3, 2)))
+
+    def test_find_uniqueness_type5_elimination(self) -> None:
+        candidates = {
+            0: {1, 2, 4},
+            3: {1, 2},
+            27: {1, 2},
+            30: {1, 2},
+        }
+
+        elimination = find_uniqueness_type5_elimination(candidates)
+
+        self.assertIsNotNone(elimination)
+        assert elimination is not None
+        self.assertEqual(elimination.kind, "ur_type5_restricted")
         self.assertEqual(elimination.eliminations, ((0, 2), (3, 2)))
 
 

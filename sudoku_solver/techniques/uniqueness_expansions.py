@@ -1,8 +1,8 @@
-"""Uniqueness expansions (restricted UR type-2/type-4 styles).
+"""Uniqueness expansions (restricted UR type-2/type-4/type-5 styles).
 
 Meaning:
     Additional uniqueness patterns beyond base unique rectangle. This restricted
-    version targets UR type-2 and UR type-4 style eliminations.
+    version targets UR type-2, type-4, and type-5 style eliminations.
 
 When used:
     On harder stalled states to avoid non-unique deadly patterns.

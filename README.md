@@ -542,7 +542,7 @@ Eliminate `3` from `r4c4`.
   Use on dense bivalue neighborhoods.
 - Uniqueness Expansions (restricted):
   Additional uniqueness logic beyond baseline unique rectangle.
-  Current implementation includes restricted UR type-2 and type-4 style eliminations.
+  Current implementation includes restricted UR type-2, type-4, and type-5 style eliminations.
   Use near endgame to avoid deadly non-unique patterns.
 - Fireworks (restricted):
   A pivot with row/column conjugate-style links can remove a remote candidate.

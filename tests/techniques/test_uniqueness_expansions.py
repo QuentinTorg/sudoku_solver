@@ -5,6 +5,23 @@ from sudoku_solver.techniques.uniqueness_expansions import apply_uniqueness_expa
 
 
 class UniquenessExpansionsTechniqueTests(unittest.TestCase):
+    def test_apply_uniqueness_expansions_returns_type5_eliminations(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2, 4},
+            3: {1, 2},
+            27: {1, 2},
+            30: {1, 2},
+        }
+
+        step = apply_uniqueness_expansions(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "uniqueness_expansions")
+        self.assertEqual(step.eliminations, [(0, 2), (3, 2)])
+        self.assertIn("ur_type5_restricted", step.rationale)
+
     def test_apply_uniqueness_expansions_returns_type4_eliminations(self) -> None:
         grid = parse_grid("." * 81)
         candidates = {
