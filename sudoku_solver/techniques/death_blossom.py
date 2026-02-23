@@ -29,7 +29,7 @@ def apply_death_blossom(grid: Grid, candidates: dict[int, set[int]]) -> Step | N
         affected_units=[],
         rationale=(
             f"Death Blossom stem {elimination.stem_cell} with petals "
-            f"{elimination.first_petal}/{elimination.second_petal} eliminates "
+            f"{list(elimination.petals)} eliminates "
             f"digit {elimination.target_digit}."
         ),
         grid_snapshot_after=format_grid(grid),

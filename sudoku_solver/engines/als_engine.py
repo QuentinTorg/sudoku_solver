@@ -1,7 +1,7 @@
 """Shared helpers for ALS-family techniques."""
 
 from dataclasses import dataclass
-from itertools import combinations
+from itertools import combinations, product
 
 from sudoku_solver.units import all_units, peers
 
@@ -30,10 +30,19 @@ class DeathBlossomElimination:
     """Single death-blossom elimination batch."""
 
     stem_cell: int
-    first_petal: int
-    second_petal: int
+    petals: tuple[int, ...]
     target_digit: int
     eliminations: tuple[tuple[int, int], ...]
+
+    @property
+    def first_petal(self) -> int:
+        """Compatibility accessor for legacy 2-petal tests/callers."""
+        return self.petals[0]
+
+    @property
+    def second_petal(self) -> int:
+        """Compatibility accessor for legacy 2-petal tests/callers."""
+        return self.petals[1]
 
 
 def find_als(candidates: dict[int, set[int]]) -> list[Als]:
@@ -222,7 +231,7 @@ def _target_digit_eliminations(
 def find_death_blossom_elimination(
     candidates: dict[int, set[int]],
 ) -> DeathBlossomElimination | None:
-    """Find one restricted death-blossom elimination."""
+    """Find one expanded death-blossom elimination."""
     for stem_cell, stem_options in sorted(candidates.items()):
         if len(stem_options) < 2:
             continue
@@ -232,6 +241,64 @@ def find_death_blossom_elimination(
             for cell_index in sorted(peers(stem_cell))
             if cell_index in candidates and len(candidates[cell_index]) == 2
         ]
+
+        by_stem_digit: dict[int, list[tuple[int, int]]] = {}
+        external_digits: set[int] = set()
+        valid_petal_cells: set[int] = set()
+        for petal_cell in petal_cells:
+            petal_options = candidates[petal_cell]
+            stem_overlap = stem_options & petal_options
+            if len(stem_overlap) != 1:
+                continue
+            stem_digit = next(iter(stem_overlap))
+            external = petal_options - {stem_digit}
+            if len(external) != 1:
+                continue
+            external_digit = next(iter(external))
+            by_stem_digit.setdefault(stem_digit, []).append((petal_cell, external_digit))
+            external_digits.add(external_digit)
+            valid_petal_cells.add(petal_cell)
+
+        if len(stem_options) >= 3 and len(by_stem_digit) >= len(stem_options):
+            for target_digit in sorted(external_digits):
+                choices_by_stem: list[list[int]] = []
+                for stem_digit in sorted(stem_options):
+                    options = [
+                        petal_cell
+                        for petal_cell, external_digit in by_stem_digit.get(stem_digit, [])
+                        if external_digit == target_digit
+                    ]
+                    if not options:
+                        choices_by_stem = []
+                        break
+                    choices_by_stem.append(options)
+                if not choices_by_stem:
+                    continue
+
+                for petal_combo in product(*choices_by_stem):
+                    petal_set = tuple(sorted(set(petal_combo)))
+                    if len(petal_set) != len(stem_options):
+                        continue
+                    common_peers = set(peers(petal_set[0]))
+                    for petal_cell in petal_set[1:]:
+                        common_peers &= peers(petal_cell)
+                    eliminations = [
+                        (cell_index, target_digit)
+                        for cell_index in sorted(common_peers)
+                        if cell_index not in {stem_cell, *petal_set}
+                        and cell_index not in valid_petal_cells
+                        and cell_index in candidates
+                        and target_digit in candidates[cell_index]
+                    ]
+                    if eliminations:
+                        return DeathBlossomElimination(
+                            stem_cell=stem_cell,
+                            petals=petal_set,
+                            target_digit=target_digit,
+                            eliminations=tuple(sorted(eliminations)),
+                        )
+
+        # Legacy restricted two-petal form.
         for first_petal, second_petal in combinations(petal_cells, 2):
             first_options = candidates[first_petal]
             second_options = candidates[second_petal]
@@ -249,21 +316,21 @@ def find_death_blossom_elimination(
                 continue
             if first_external != second_external:
                 continue
-            shared_external = next(iter(first_external))
+            target_digit = next(iter(first_external))
 
             eliminations = [
-                (cell_index, shared_external)
+                (cell_index, target_digit)
                 for cell_index in sorted(peers(first_petal) & peers(second_petal))
                 if cell_index not in {stem_cell, first_petal, second_petal}
+                and cell_index not in valid_petal_cells
                 and cell_index in candidates
-                and shared_external in candidates[cell_index]
+                and target_digit in candidates[cell_index]
             ]
             if eliminations:
                 return DeathBlossomElimination(
                     stem_cell=stem_cell,
-                    first_petal=first_petal,
-                    second_petal=second_petal,
-                    target_digit=shared_external,
+                    petals=(first_petal, second_petal),
+                    target_digit=target_digit,
                     eliminations=tuple(sorted(eliminations)),
                 )
 

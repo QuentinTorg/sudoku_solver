@@ -532,8 +532,9 @@ Eliminate `3` from `r4c4`.
   branch contradict, the shared consequence is applied.
   Use late on expert stalls when shorter chain rules are exhausted.
 - Death Blossom (restricted):
-  A stem cell plus two petals can force a shared external candidate false.
-  Useful when petal pairs tie different stem digits to the same outside value.
+  A stem cell plus one petal per stem-digit can force a shared external
+  candidate false.
+  The current implementation supports both two-petal and multi-petal stems.
   Use on dense bivalue neighborhoods.
 - Uniqueness Expansions (restricted):
   Additional uniqueness logic beyond baseline unique rectangle.

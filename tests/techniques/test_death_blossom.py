@@ -33,6 +33,23 @@ class DeathBlossomTechniqueTests(unittest.TestCase):
         step = apply_death_blossom(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_death_blossom_supports_multi_petal_elimination(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            40: {1, 2, 3},
+            30: {1, 9},
+            41: {2, 9},
+            49: {3, 9},
+            32: {8, 9},
+        }
+
+        step = apply_death_blossom(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "death_blossom")
+        self.assertEqual(step.eliminations, [(32, 9)])
+
 
 if __name__ == "__main__":
     unittest.main()

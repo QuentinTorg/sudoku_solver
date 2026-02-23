@@ -68,6 +68,24 @@ class AlsEngineTests(unittest.TestCase):
         self.assertEqual(elimination.target_digit, 9)
         self.assertEqual(elimination.eliminations, ((46, 9),))
 
+    def test_find_death_blossom_elimination_supports_multi_petal_stem(self) -> None:
+        candidates = {
+            40: {1, 2, 3},
+            30: {1, 9},
+            41: {2, 9},
+            49: {3, 9},
+            32: {8, 9},
+        }
+
+        elimination = find_death_blossom_elimination(candidates)
+
+        self.assertIsNotNone(elimination)
+        assert elimination is not None
+        self.assertEqual(elimination.stem_cell, 40)
+        self.assertEqual(elimination.petals, (30, 41, 49))
+        self.assertEqual(elimination.target_digit, 9)
+        self.assertEqual(elimination.eliminations, ((32, 9),))
+
     def test_find_als_chain_elimination_returns_expected_batch(self) -> None:
         candidates = {
             0: {1, 4},
