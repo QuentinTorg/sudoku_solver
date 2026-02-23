@@ -36,6 +36,17 @@ class XyzWingTechniqueTests(unittest.TestCase):
         step = apply_xyz_wing(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_xyz_wing_skips_when_pincers_share_multiple_digits(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2, 3},
+            1: {1, 2},
+            9: {1, 2},
+            10: {1, 2, 7},
+        }
+        step = apply_xyz_wing(grid, candidates)
+        self.assertIsNone(step)
+
 
 if __name__ == "__main__":
     unittest.main()

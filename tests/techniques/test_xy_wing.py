@@ -46,6 +46,16 @@ class XyWingTechniqueTests(unittest.TestCase):
         step = apply_xy_wing(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_xy_wing_returns_none_when_no_elimination_targets(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2},
+            1: {1, 3},
+            9: {2, 3},
+        }
+        step = apply_xy_wing(grid, candidates)
+        self.assertIsNone(step)
+
 
 if __name__ == "__main__":
     unittest.main()

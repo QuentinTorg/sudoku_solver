@@ -35,6 +35,18 @@ class RemotePairsTechniqueTests(unittest.TestCase):
         step = apply_remote_pairs(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_remote_pairs_skips_non_bipartite_components(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 9},
+            1: {1, 9},
+            9: {1, 9},
+            80: {1, 9},
+            10: {1, 9, 3},
+        }
+        step = apply_remote_pairs(grid, candidates)
+        self.assertIsNone(step)
+
 
 if __name__ == "__main__":
     unittest.main()

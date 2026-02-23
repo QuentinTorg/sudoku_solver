@@ -20,8 +20,7 @@ def apply_grouped_aic(grid: Grid, candidates: dict[int, set[int]]) -> Step | Non
         return None
     if elimination.pattern == "same_cell_discontinuity":
         rationale = (
-            "Grouped AIC found a discontinuous same-cell loop "
-            "and removed non-endpoint candidates."
+            "Grouped AIC found a discontinuous same-cell loop and removed non-endpoint candidates."
         )
     else:
         rationale = "Grouped AIC (restricted) reused AIC-compatible chain elimination."

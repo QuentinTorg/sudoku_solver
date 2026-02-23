@@ -35,8 +35,8 @@ from sudoku_solver.techniques import (
     apply_remote_pairs,
     apply_sashimi_fish,
     apply_simple_coloring,
-    apply_squirmbag,
     apply_skyscraper,
+    apply_squirmbag,
     apply_sue_de_coq,
     apply_sue_de_coq_full,
     apply_swordfish,
@@ -70,6 +70,7 @@ class TechniqueSpec:
 
     name: str
     func: TechniqueFunc
+
 
 _HIGH_RISK_TECHNIQUES = {
     TechniqueName.XY_WING,

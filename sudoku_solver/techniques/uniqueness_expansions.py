@@ -28,9 +28,6 @@ def apply_uniqueness_expansions(grid: Grid, candidates: dict[int, set[int]]) -> 
         placements=[],
         eliminations=list(elimination.eliminations),
         affected_units=[],
-        rationale=(
-            f"Uniqueness expansion ({elimination.kind}) "
-            f"eliminates digit {target_digit}."
-        ),
+        rationale=(f"Uniqueness expansion ({elimination.kind}) eliminates digit {target_digit}."),
         grid_snapshot_after=format_grid(grid),
     )

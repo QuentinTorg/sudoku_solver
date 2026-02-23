@@ -254,6 +254,24 @@ class CliTests(unittest.TestCase):
         self.assertIn("- hidden_single: 1", output)
         self.assertIn("- naked_single: 2", output)
 
+    def test_main_prints_none_for_empty_telemetry(self) -> None:
+        fake = SolveResult(
+            status=SolveStatus.SOLVED,
+            grid=Grid(cells=(0,) * 81),
+            grid_string="." * 81,
+            steps=[],
+            message="",
+            technique_counts={},
+        )
+        with patch("sudoku_solver.cli.solve_from_string", return_value=fake):
+            with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+                code = main(["." * 81, "--show-telemetry"])
+
+        output = mock_stdout.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn("techniques:", output)
+        self.assertIn("- none", output)
+
     def test_main_ignores_comments_and_blank_lines(self) -> None:
         solved = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
         with NamedTemporaryFile("w+", encoding="utf-8", delete=True) as tmp:

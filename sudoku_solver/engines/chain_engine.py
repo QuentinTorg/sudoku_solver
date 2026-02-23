@@ -459,9 +459,7 @@ def find_forcing_nets_consequence(
                 pivot_cell=pivot_cell,
                 placements=tuple(common_placements),
                 eliminations=(),
-                reason=(
-                    f"Forcing net branches from cell {pivot_cell} agree on placements."
-                ),
+                reason=(f"Forcing net branches from cell {pivot_cell} agree on placements."),
             )
 
         common_eliminations = _common_eliminations_for_branches(
@@ -474,9 +472,7 @@ def find_forcing_nets_consequence(
                 pivot_cell=pivot_cell,
                 placements=(),
                 eliminations=tuple(common_eliminations),
-                reason=(
-                    f"Forcing net branches from cell {pivot_cell} agree on eliminations."
-                ),
+                reason=(f"Forcing net branches from cell {pivot_cell} agree on eliminations."),
             )
 
     return None
@@ -554,17 +550,12 @@ def _has_unit_digit_contradiction(
     candidates: dict[int, set[int]],
 ) -> bool:
     for _, unit_cells in all_units():
-        placed = {
-            cells[cell_index]
-            for cell_index in unit_cells
-            if cells[cell_index] != 0
-        }
+        placed = {cells[cell_index] for cell_index in unit_cells if cells[cell_index] != 0}
         for digit in range(1, 10):
             if digit in placed:
                 continue
             if any(
-                cells[cell_index] == 0
-                and digit in candidates.get(cell_index, set())
+                cells[cell_index] == 0 and digit in candidates.get(cell_index, set())
                 for cell_index in unit_cells
             ):
                 continue

@@ -30,9 +30,7 @@ def apply_sashimi_fish(grid: Grid, candidates: dict[int, set[int]]) -> Step | No
                 placements=[],
                 eliminations=list(fish.eliminations),
                 affected_units=list(fish.affected_units),
-                rationale=(
-                    "Sashimi fish (restricted) reused finned-fish-compatible elimination."
-                ),
+                rationale=("Sashimi fish (restricted) reused finned-fish-compatible elimination."),
                 grid_snapshot_after=format_grid(grid),
             )
     return None

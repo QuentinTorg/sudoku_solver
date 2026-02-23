@@ -161,7 +161,9 @@ def find_als_chain_elimination(candidates: dict[int, set[int]]) -> AlsEliminatio
                 if set(second_als.cells) & set(middle_als.cells):
                     continue
 
-                target_digits = sorted((first_als.digits & second_als.digits) - {first_rcc, second_rcc})
+                target_digits = sorted(
+                    (first_als.digits & second_als.digits) - {first_rcc, second_rcc}
+                )
                 for target_digit in target_digits:
                     if target_digit in middle_als.digits:
                         continue
@@ -254,7 +256,9 @@ def _restricted_link_exists(
     digit: int,
 ) -> bool:
     first_cells = [cell_index for cell_index in first_als.cells if digit in candidates[cell_index]]
-    second_cells = [cell_index for cell_index in second_als.cells if digit in candidates[cell_index]]
+    second_cells = [
+        cell_index for cell_index in second_als.cells if digit in candidates[cell_index]
+    ]
     if len(first_cells) != 1 or len(second_cells) != 1:
         return False
     return second_cells[0] in peers(first_cells[0])

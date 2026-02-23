@@ -236,15 +236,17 @@ def find_uniqueness_type5_elimination(
         for first_roof_idx, second_roof_idx in ((0, 1), (2, 3), (0, 2), (1, 3)):
             first_roof = pattern.corners[first_roof_idx]
             second_roof = pattern.corners[second_roof_idx]
-            floor_indices = [idx for idx in range(4) if idx not in {first_roof_idx, second_roof_idx}]
+            floor_indices = [
+                idx for idx in range(4) if idx not in {first_roof_idx, second_roof_idx}
+            ]
             if any(set(pattern.corner_sets[idx]) != pair_set for idx in floor_indices):
                 continue
-            if not (
-                (first_roof // 9 == second_roof // 9)
-                or (first_roof % 9 == second_roof % 9)
-            ):
+            if not ((first_roof // 9 == second_roof // 9) or (first_roof % 9 == second_roof % 9)):
                 continue
-            if all(set(pattern.corner_sets[idx]) == pair_set for idx in (first_roof_idx, second_roof_idx)):
+            if all(
+                set(pattern.corner_sets[idx]) == pair_set
+                for idx in (first_roof_idx, second_roof_idx)
+            ):
                 continue
 
             if first_roof // 9 == second_roof // 9:

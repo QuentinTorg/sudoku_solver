@@ -1,6 +1,13 @@
 import unittest
 
 from sudoku_solver.engines.fish_engine import (
+    _find_finned_swordfish_col_based,
+    _find_finned_swordfish_row_based,
+    _find_finned_x_wing_col_based,
+    _find_finned_x_wing_row_based,
+    _franken_eliminations,
+    _franken_unit_label,
+    _FrankenBaseUnit,
     find_finned_swordfish_elimination,
     find_finned_x_wing_elimination,
     find_franken_mutant_fish_elimination,
@@ -79,6 +86,88 @@ class FishEngineTests(unittest.TestCase):
         self.assertIsNotNone(fish)
         assert fish is not None
         self.assertEqual(fish.eliminations, ((57, 7), (58, 7)))
+
+    def test_find_standard_fish_elimination_supports_column_orientation(self) -> None:
+        candidates = {
+            1: {2, 7},
+            4: {3, 7},
+            37: {4, 7},
+            40: {5, 7},
+            7: {1, 7},
+            43: {6, 7},
+        }
+
+        fish = find_standard_fish_elimination(
+            candidates,
+            7,
+            size=2,
+            exact_line_size=True,
+        )
+
+        self.assertIsNotNone(fish)
+        assert fish is not None
+        self.assertEqual(fish.orientation, "col")
+        self.assertEqual(fish.eliminations, ((7, 7), (43, 7)))
+        self.assertIn("row1", fish.affected_units)
+
+    def test_finned_x_wing_helpers_cover_continue_paths(self) -> None:
+        candidates = {
+            0: {1},
+        }
+        row_positions = {
+            0: {0, 1, 2},
+            1: {1, 2, 3},
+        }
+        self.assertIsNone(_find_finned_x_wing_row_based(candidates, 1, row_positions))
+
+        col_positions = {
+            0: {0, 1, 2},
+            1: {1, 2, 3},
+        }
+        self.assertIsNone(_find_finned_x_wing_col_based(candidates, 1, col_positions))
+
+    def test_finned_swordfish_helpers_cover_continue_paths(self) -> None:
+        candidates = {
+            0: {1},
+        }
+        row_positions = {
+            0: {0, 1, 2, 3},
+            1: {0, 1, 2, 4},
+            2: {0, 1, 2, 5},
+        }
+        self.assertIsNone(_find_finned_swordfish_row_based(candidates, 1, row_positions))
+
+        col_positions = {
+            0: {0, 1, 2, 3},
+            1: {0, 1, 2, 4},
+            2: {0, 1, 2, 5},
+        }
+        self.assertIsNone(_find_finned_swordfish_col_based(candidates, 1, col_positions))
+
+    def test_franken_helpers_cover_column_orientation(self) -> None:
+        candidates = {
+            9: {7},
+            18: {7},
+        }
+        eliminations = _franken_eliminations(
+            candidates,
+            7,
+            orientation="col",
+            cover_lines=(1, 2),
+            protected_cells=set(),
+        )
+        self.assertEqual(eliminations, [(9, 7), (18, 7)])
+        self.assertEqual(
+            _franken_unit_label(
+                _FrankenBaseUnit(
+                    kind="col",
+                    index=1,
+                    covers=frozenset({0, 1}),
+                    protected_cells=frozenset(),
+                )
+            ),
+            "col2",
+        )
 
 
 if __name__ == "__main__":

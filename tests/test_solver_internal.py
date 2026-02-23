@@ -8,8 +8,10 @@ from sudoku_solver.solver import (
     _classify_difficulty,
     _find_contradiction,
     _find_unique_solution,
+    _find_unique_solution_limited,
     _partition_techniques,
     _resolve_techniques,
+    _step_preserves_solution,
     solve,
 )
 from sudoku_solver.types import DifficultyRating, Grid, SolveStatus, Step, TechniqueName
@@ -188,6 +190,12 @@ class SolverInternalTests(unittest.TestCase):
         self.assertEqual(result.status, SolveStatus.INVALID)
         self.assertIn("No valid solution exists", result.message)
 
+    def test_solve_returns_stalled_when_fallback_detects_non_unique_state(self) -> None:
+        with patch("sudoku_solver.solver._find_unique_solution", return_value=(None, 2)):
+            result = solve(parse_grid("." * 81), techniques=[], allow_fallback_search=True)
+        self.assertEqual(result.status, SolveStatus.STALLED)
+        self.assertIn("No further human-technique moves were applied.", result.message)
+
     def test_solve_from_grid_with_no_zeroes_returns_immediate_solved(self) -> None:
         solved = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
         result = solve(parse_grid(solved))
@@ -222,9 +230,53 @@ class SolverInternalTests(unittest.TestCase):
         rating = _classify_difficulty(steps, used_fallback=True)
         self.assertEqual(rating, DifficultyRating.EXPERT)
 
+    def test_classify_difficulty_handles_empty_and_advanced_sets(self) -> None:
+        self.assertEqual(_classify_difficulty([], used_fallback=False), DifficultyRating.EASY)
+        self.assertEqual(
+            _classify_difficulty([Step(technique=TechniqueName.XYZ_WING)], used_fallback=False),
+            DifficultyRating.EXPERT,
+        )
+        self.assertEqual(
+            _classify_difficulty([Step(technique=TechniqueName.X_WING)], used_fallback=False),
+            DifficultyRating.HARD,
+        )
+
     def test_assignment_has_solution_returns_false_for_conflicting_value(self) -> None:
         cells = [1] + [0] * 80
         self.assertFalse(_assignment_has_solution(cells, 0, 2))
+
+    def test_assignment_has_solution_rejects_invalid_index_and_digit(self) -> None:
+        cells = [0] * 81
+        self.assertFalse(_assignment_has_solution(cells, -1, 1))
+        self.assertFalse(_assignment_has_solution(cells, 0, 10))
+
+    def test_find_unique_solution_limited_validates_max_solutions(self) -> None:
+        with self.assertRaises(ValueError):
+            _find_unique_solution_limited([0] * 81, max_solutions=0)
+
+    def test_find_unique_solution_limited_stops_after_max_solution_cap(self) -> None:
+        solution, count = _find_unique_solution_limited([0] * 81, max_solutions=1)
+        self.assertIsNotNone(solution)
+        self.assertEqual(count, 1)
+
+    def test_step_preserves_solution_handles_invalid_or_noop_application(self) -> None:
+        cells = [1] + [0] * 80
+        candidates = {1: {2, 3}}
+        noop_step = Step(technique=TechniqueName.NAKED_PAIR, eliminations=[(0, 1)])
+        self.assertFalse(_step_preserves_solution(cells, candidates, noop_step))
+
+    def test_step_preserves_solution_rejects_contradicting_candidate_elimination(self) -> None:
+        cells = [0] * 81
+        cells[1] = 1
+        candidates = {0: {1}}
+        step = Step(technique=TechniqueName.NAKED_PAIR, eliminations=[(0, 1)])
+        self.assertFalse(_step_preserves_solution(cells, candidates, step))
+
+    def test_step_preserves_solution_rejects_impossible_placement(self) -> None:
+        cells = [1] + [0] * 80
+        candidates = {0: {1}}
+        step = Step(technique=TechniqueName.NAKED_SINGLE, placements=[(0, 2)])
+        self.assertFalse(_step_preserves_solution(cells, candidates, step))
 
     def test_solve_skips_high_risk_step_that_is_not_solution_safe(self) -> None:
         unsafe_step = Step(
@@ -239,9 +291,7 @@ class SolverInternalTests(unittest.TestCase):
         self.assertIn("Fallback search is disabled.", result.message)
 
     def test_solve_prioritizes_primary_pass_before_deferred(self) -> None:
-        puzzle = (
-            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
-        )
+        puzzle = "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
         call_order: list[str] = []
 
         def fake_finned(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
@@ -267,9 +317,7 @@ class SolverInternalTests(unittest.TestCase):
         self.assertEqual(result.steps[0].technique, TechniqueName.NAKED_SINGLE)
 
     def test_solve_uses_deferred_pass_after_primary_stalls(self) -> None:
-        puzzle = (
-            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
-        )
+        puzzle = "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
         call_order: list[str] = []
 
         def fake_finned(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
@@ -295,9 +343,7 @@ class SolverInternalTests(unittest.TestCase):
         self.assertEqual(result.steps[0].technique, TechniqueName.FINNED_X_WING)
 
     def test_solve_runs_ultra_expensive_after_deferred_pass_stalls(self) -> None:
-        puzzle = (
-            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
-        )
+        puzzle = "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
         call_order: list[str] = []
 
         def fake_franken(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:
@@ -331,9 +377,7 @@ class SolverInternalTests(unittest.TestCase):
         self.assertEqual(result.steps[0].technique, TechniqueName.FRANKEN_MUTANT_FISH)
 
     def test_solve_skips_ultra_expensive_when_deferred_pass_progresses(self) -> None:
-        puzzle = (
-            "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
-        )
+        puzzle = "53467891267219534819834256785976142342685379171392485696153728428741963534528617."
         call_order: list[str] = []
 
         def fake_franken(_grid: Grid, _candidates: dict[int, set[int]]) -> Step | None:

@@ -15,8 +15,7 @@ from itertools import combinations
 
 from sudoku_solver.grid import format_grid
 from sudoku_solver.types import Grid, Step, TechniqueName
-from sudoku_solver.units import all_units
-from sudoku_solver.units import peers
+from sudoku_solver.units import all_units, peers
 
 
 def apply_wxyz_wing(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
@@ -151,9 +150,7 @@ def _eliminations_for_digit(
 def _is_two_unit_pattern(wing_cells: tuple[int, int, int, int]) -> bool:
     wing_set = set(wing_cells)
     unit_map = {name: set(unit_cells) for name, unit_cells in all_units()}
-    relevant_units = [
-        name for name, unit_cells in unit_map.items() if wing_set & unit_cells
-    ]
+    relevant_units = [name for name, unit_cells in unit_map.items() if wing_set & unit_cells]
     for first_name, second_name in combinations(relevant_units, 2):
         coverage = unit_map[first_name] | unit_map[second_name]
         if wing_set.issubset(coverage):

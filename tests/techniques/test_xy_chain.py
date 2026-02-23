@@ -1,7 +1,7 @@
 import unittest
 
 from sudoku_solver.grid import parse_grid
-from sudoku_solver.techniques.xy_chain import apply_xy_chain
+from sudoku_solver.techniques.xy_chain import _search_chain, apply_xy_chain
 
 
 class XYChainTechniqueTests(unittest.TestCase):
@@ -32,6 +32,23 @@ class XYChainTechniqueTests(unittest.TestCase):
         }
 
         step = apply_xy_chain(grid, candidates)
+        self.assertIsNone(step)
+
+    def test_search_chain_respects_max_chain_length(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2},
+            1: {2, 3},
+        }
+        step = _search_chain(
+            grid,
+            candidates,
+            start=0,
+            current=1,
+            target_digit=1,
+            previous_link_digit=2,
+            path=[0, 1, 2, 3, 4, 5, 6],
+        )
         self.assertIsNone(step)
 
 

@@ -44,6 +44,17 @@ class BugPlusOneTechniqueTests(unittest.TestCase):
         step = apply_bug_plus_one(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_bug_plus_one_requires_single_trivalue_cell(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2, 3, 4},
+            1: {1, 2},
+            9: {1, 2},
+            10: {3, 4},
+        }
+        step = apply_bug_plus_one(grid, candidates)
+        self.assertIsNone(step)
+
 
 if __name__ == "__main__":
     unittest.main()

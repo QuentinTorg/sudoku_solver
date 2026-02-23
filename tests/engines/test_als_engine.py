@@ -1,6 +1,11 @@
 import unittest
 
 from sudoku_solver.engines.als_engine import (
+    Als,
+    DeathBlossomElimination,
+    _als_cells_disjoint,
+    _restricted_link_exists,
+    _target_digit_eliminations,
     find_als,
     find_als_chain_elimination,
     find_als_xz_elimination,
@@ -21,16 +26,10 @@ class AlsEngineTests(unittest.TestCase):
         all_als = find_als(candidates)
 
         self.assertTrue(
-            any(
-                als.cells == (0, 1) and als.digits == frozenset({2, 5, 7})
-                for als in all_als
-            )
+            any(als.cells == (0, 1) and als.digits == frozenset({2, 5, 7}) for als in all_als)
         )
         self.assertTrue(
-            any(
-                als.cells == (9, 10) and als.digits == frozenset({2, 5, 8})
-                for als in all_als
-            )
+            any(als.cells == (9, 10) and als.digits == frozenset({2, 5, 8}) for als in all_als)
         )
 
     def test_find_als_xz_elimination_returns_expected_batch(self) -> None:
@@ -137,6 +136,57 @@ class AlsEngineTests(unittest.TestCase):
         assert elimination is not None
         self.assertEqual(elimination.target_digit, 4)
         self.assertEqual(elimination.eliminations, ((2, 4),))
+
+    def test_death_blossom_properties_expose_first_two_petals(self) -> None:
+        elimination = DeathBlossomElimination(
+            stem_cell=40,
+            petals=(30, 41, 49),
+            target_digit=9,
+            eliminations=((32, 9),),
+        )
+        self.assertEqual(elimination.first_petal, 30)
+        self.assertEqual(elimination.second_petal, 41)
+
+    def test_find_als_chain_returns_none_when_no_links_exist(self) -> None:
+        candidates = {
+            0: {1, 2},
+            10: {3, 4},
+            20: {5, 6},
+        }
+        self.assertIsNone(find_als_chain_elimination(candidates))
+
+    def test_als_helper_predicates_cover_false_paths(self) -> None:
+        first = Als(cells=(0, 1), digits=frozenset({1, 2, 3}), unit_name="row1")
+        second = Als(cells=(1, 2), digits=frozenset({1, 4, 5}), unit_name="row1")
+        self.assertFalse(_als_cells_disjoint(first, second))
+
+        candidates = {
+            0: {1, 2},
+            1: {1, 2, 3},
+            2: {1, 3, 4},
+        }
+        self.assertFalse(_restricted_link_exists(candidates, first, second, 1))
+
+    def test_target_digit_eliminations_handles_missing_target_cells(self) -> None:
+        first = Als(cells=(0, 1), digits=frozenset({1, 2, 3}), unit_name="row1")
+        second = Als(cells=(9, 10), digits=frozenset({1, 2, 4}), unit_name="row2")
+        candidates = {
+            0: {1, 2},
+            1: {2, 3},
+            9: {1, 2},
+            10: {1, 4},
+            11: {3, 4},
+        }
+        self.assertEqual(_target_digit_eliminations(candidates, first, second, 5), [])
+
+    def test_find_death_blossom_skips_invalid_stem_and_external_shapes(self) -> None:
+        candidates = {
+            0: {1},
+            1: {1, 2},
+            9: {1, 2},
+            10: {2, 3, 4},
+        }
+        self.assertIsNone(find_death_blossom_elimination(candidates))
 
 
 if __name__ == "__main__":

@@ -182,9 +182,7 @@ def find_finned_x_wing_elimination(
         size=3,
         exact_line_size=False,
     )
-    row_positions = {
-        row: covers for row, covers in row_positions.items() if 1 <= len(covers) <= 3
-    }
+    row_positions = {row: covers for row, covers in row_positions.items() if 1 <= len(covers) <= 3}
     row_result = _find_finned_x_wing_row_based(candidates, digit, row_positions)
     if row_result is not None:
         return row_result
@@ -196,9 +194,7 @@ def find_finned_x_wing_elimination(
         size=3,
         exact_line_size=False,
     )
-    col_positions = {
-        col: covers for col, covers in col_positions.items() if 1 <= len(covers) <= 3
-    }
+    col_positions = {col: covers for col, covers in col_positions.items() if 1 <= len(covers) <= 3}
     return _find_finned_x_wing_col_based(candidates, digit, col_positions)
 
 
@@ -320,9 +316,7 @@ def find_finned_swordfish_elimination(
         size=4,
         exact_line_size=False,
     )
-    row_positions = {
-        row: covers for row, covers in row_positions.items() if 2 <= len(covers) <= 4
-    }
+    row_positions = {row: covers for row, covers in row_positions.items() if 2 <= len(covers) <= 4}
     row_result = _find_finned_swordfish_row_based(candidates, digit, row_positions)
     if row_result is not None:
         return row_result
@@ -334,9 +328,7 @@ def find_finned_swordfish_elimination(
         size=4,
         exact_line_size=False,
     )
-    col_positions = {
-        col: covers for col, covers in col_positions.items() if 2 <= len(covers) <= 4
-    }
+    col_positions = {col: covers for col, covers in col_positions.items() if 2 <= len(covers) <= 4}
     return _find_finned_swordfish_col_based(candidates, digit, col_positions)
 
 

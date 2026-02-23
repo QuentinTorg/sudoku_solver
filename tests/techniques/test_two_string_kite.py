@@ -54,6 +54,17 @@ class TwoStringKiteTechniqueTests(unittest.TestCase):
         self.assertEqual(step.technique.value, "two_string_kite")
         self.assertEqual(step.eliminations, [(10, 5), (19, 5)])
 
+    def test_apply_two_string_kite_skips_degenerate_shared_opposite_endpoint(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            10: {1, 5},
+            11: {2, 5},
+            2: {3, 5},
+        }
+
+        step = apply_two_string_kite(grid, candidates)
+        self.assertIsNone(step)
+
 
 if __name__ == "__main__":
     unittest.main()

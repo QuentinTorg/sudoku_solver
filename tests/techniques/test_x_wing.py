@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import patch
 
+from sudoku_solver.engines.fish_engine import FishElimination
 from sudoku_solver.grid import parse_grid
 from sudoku_solver.techniques.x_wing import apply_x_wing
 
@@ -36,6 +38,25 @@ class XWingTechniqueTests(unittest.TestCase):
 
         step = apply_x_wing(grid, candidates)
         self.assertIsNone(step)
+
+    def test_apply_x_wing_supports_column_oriented_rationale(self) -> None:
+        grid = parse_grid("." * 81)
+        fish = FishElimination(
+            digit=7,
+            eliminations=((10, 7),),
+            affected_units=("col2", "col5", "row3", "row8"),
+            orientation="col",
+            base_units=(1, 4),
+        )
+        with patch(
+            "sudoku_solver.techniques.x_wing.find_standard_fish_elimination", return_value=fish
+        ):
+            step = apply_x_wing(grid, {10: {7}})
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertIn("columns", step.rationale)
+        self.assertEqual(step.eliminations, [(10, 7)])
 
 
 if __name__ == "__main__":

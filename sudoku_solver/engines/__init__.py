@@ -35,11 +35,11 @@ from sudoku_solver.engines.fish_engine import (
 from sudoku_solver.engines.uniqueness_engine import (
     RectanglePairPattern,
     UniquenessElimination,
+    find_unique_rectangle_type1_elimination,
+    find_uniqueness_expansion_elimination,
     find_uniqueness_type2_elimination,
     find_uniqueness_type4_elimination,
     find_uniqueness_type5_elimination,
-    find_unique_rectangle_type1_elimination,
-    find_uniqueness_expansion_elimination,
     iter_rectangle_pair_patterns,
 )
 

@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import patch
 
+from sudoku_solver.engines.chain_engine import AicElimination
 from sudoku_solver.grid import parse_grid
 from sudoku_solver.techniques.aic import apply_aic
 
@@ -35,6 +37,23 @@ class AicTechniqueTests(unittest.TestCase):
 
         step = apply_aic(grid, candidates)
         self.assertIsNone(step)
+
+    def test_apply_aic_uses_same_cell_discontinuity_rationale(self) -> None:
+        grid = parse_grid("." * 81)
+        elimination = AicElimination(
+            digit=1,
+            start_cell=0,
+            end_cell=0,
+            eliminations=((0, 3),),
+            pattern="same_cell_discontinuity",
+        )
+
+        with patch("sudoku_solver.techniques.aic.find_aic_elimination", return_value=elimination):
+            step = apply_aic(grid, {0: {1, 2, 3}})
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertIn("discontinuous loop", step.rationale)
 
 
 if __name__ == "__main__":

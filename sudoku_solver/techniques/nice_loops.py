@@ -20,13 +20,10 @@ def apply_nice_loops(grid: Grid, candidates: dict[int, set[int]]) -> Step | None
         return None
     if elimination.pattern == "same_cell_discontinuity":
         rationale = (
-            "Nice Loops found a discontinuous same-cell loop and removed "
-            "non-endpoint candidates."
+            "Nice Loops found a discontinuous same-cell loop and removed non-endpoint candidates."
         )
     else:
-        rationale = (
-            "Nice Loops (restricted) detected an AIC-compatible loop elimination."
-        )
+        rationale = "Nice Loops (restricted) detected an AIC-compatible loop elimination."
     return Step(
         technique=TechniqueName.NICE_LOOPS,
         placements=[],

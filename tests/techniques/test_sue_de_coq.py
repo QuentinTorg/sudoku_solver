@@ -47,6 +47,29 @@ class SueDeCoqTechniqueTests(unittest.TestCase):
         step = apply_sue_de_coq(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_sue_de_coq_supports_column_intersection(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2},
+            9: {3, 4},
+            27: {2},
+            36: {1},
+            45: {1, 5},
+            54: {2, 6},
+            1: {3},
+            2: {4},
+            10: {3, 7},
+            11: {4, 8},
+        }
+
+        step = apply_sue_de_coq(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "sue_de_coq")
+        self.assertEqual(step.eliminations, [(10, 3), (11, 4), (45, 1), (54, 2)])
+        self.assertEqual(step.affected_units, ["col1", "box1"])
+
 
 if __name__ == "__main__":
     unittest.main()

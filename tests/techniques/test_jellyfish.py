@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import patch
 
+from sudoku_solver.engines.fish_engine import FishElimination
 from sudoku_solver.grid import parse_grid
 from sudoku_solver.techniques.jellyfish import apply_jellyfish
 
@@ -45,6 +47,25 @@ class JellyfishTechniqueTests(unittest.TestCase):
 
         step = apply_jellyfish(grid, candidates)
         self.assertIsNone(step)
+
+    def test_apply_jellyfish_supports_column_oriented_rationale(self) -> None:
+        grid = parse_grid("." * 81)
+        fish = FishElimination(
+            digit=6,
+            eliminations=((10, 6),),
+            affected_units=("col1", "col2", "col3", "col4"),
+            orientation="col",
+            base_units=(0, 1, 2, 3),
+        )
+        with patch(
+            "sudoku_solver.techniques.jellyfish.find_standard_fish_elimination", return_value=fish
+        ):
+            step = apply_jellyfish(grid, {10: {6}})
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertIn("columns", step.rationale)
+        self.assertEqual(step.affected_units, ["col1", "col2", "col3", "col4"])
 
 
 if __name__ == "__main__":
