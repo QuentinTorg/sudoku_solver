@@ -192,6 +192,7 @@ python scripts/benchmark.py puzzles/top1465.txt --allow-fallback-search
 python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --progress-every 500
 python scripts/benchmark.py puzzles/top1465.txt --profile-techniques --top-techniques 20
 python scripts/benchmark.py puzzles/top1465.txt --output-json benchmark.json --output-csv benchmark.csv
+python scripts/check_benchmark_guardrail.py benchmark.json --max-avg-ms 700 --max-p95-ms 2500 --min-throughput 2.5
 ```
 
 ## Input Format
@@ -283,14 +284,15 @@ Notes:
   - Branch coverage gate (minimum 97%)
 - `Dataset Regression` workflow (`.github/workflows/dataset.yml`) runs on pushes to `main` and manual dispatch:
   - Dataset regression on `puzzles/top95.txt` and `puzzles/top1465.txt`
-  - Benchmark artifact generation
+  - Benchmark artifact generation (`.txt`, `.json`, `.csv`)
+  - Benchmark performance guardrail checks on average latency, p95 latency, and throughput
 
 ## Future Work / Roadmap
 
-1. Add a CI performance guardrail that checks benchmark metrics against configured thresholds.
-2. Add a technique cost profiler report (call count, hit count, total/runtime averages) during benchmark runs.
+1. [x] Add a CI performance guardrail that checks benchmark metrics against configured thresholds.
+2. [x] Add a technique cost profiler report (call count, hit count, total/runtime averages) during benchmark runs.
 3. Make benchmark execution path usage explicit so local runs always target workspace code.
-4. Add machine-readable benchmark outputs (JSON/CSV) for run-to-run comparisons and automation.
+4. [x] Add machine-readable benchmark outputs (JSON/CSV) for run-to-run comparisons and automation.
 5. Clean up legacy/noise artifacts in the repo (for example stray coverage byproducts).
 6. Add a technique index table in `sudoku_solver/techniques/README.md` (family, complexity tier, status, expected cost).
 7. Continue clarifying fallback-search docs and examples as optional/non-default behavior.

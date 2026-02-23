@@ -33,11 +33,29 @@ jobs:
 
       - name: Benchmark top1465
         run: |
-          python scripts/benchmark.py puzzles/top1465.txt --progress-every 0 --top-slowest 15 | tee benchmark_top1465.txt
+          python scripts/benchmark.py \
+            puzzles/top1465.txt \
+            --progress-every 0 \
+            --top-slowest 15 \
+            --profile-techniques \
+            --top-techniques 20 \
+            --output-json benchmark_top1465.json \
+            --output-csv benchmark_top1465.csv | tee benchmark_top1465.txt
+
+      - name: Benchmark Performance Guardrail
+        run: |
+          python scripts/check_benchmark_guardrail.py \
+            benchmark_top1465.json \
+            --max-avg-ms 700 \
+            --max-p95-ms 2500 \
+            --min-throughput 2.5
 
       - name: Upload Benchmark Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-top1465
-          path: benchmark_top1465.txt
+          path: |
+            benchmark_top1465.txt
+            benchmark_top1465.json
+            benchmark_top1465.csv
