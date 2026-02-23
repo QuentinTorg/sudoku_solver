@@ -1,7 +1,7 @@
 """Forcing Nets technique (restricted implementation).
 
 Meaning:
-    Assume each candidate of a 2- or 3-candidate pivot cell in turn and
+    Assume each candidate of a 2- to 4-candidate pivot cell in turn and
     propagate forced singles. If all valid branches agree on a consequence,
     or all but one branch contradict, that consequence is logically forced.
 

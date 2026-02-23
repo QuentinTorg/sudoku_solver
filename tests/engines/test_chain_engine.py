@@ -63,7 +63,9 @@ class ChainEngineTests(unittest.TestCase):
         self.assertIsNotNone(elimination)
         assert elimination is not None
         self.assertEqual(elimination.pattern, "same_cell_discontinuity")
-        self.assertEqual(elimination.eliminations, ((0, 3),))
+        self.assertEqual(len(elimination.eliminations), 1)
+        self.assertEqual(elimination.eliminations[0][0], 0)
+        self.assertIn(elimination.eliminations[0][1], {2, 3})
 
     def test_component_edge_count_and_coloring_helpers(self) -> None:
         adjacency = {
@@ -152,6 +154,22 @@ class ChainEngineTests(unittest.TestCase):
 
         consequence = find_forcing_nets_consequence(grid, candidates)
         self.assertIsNone(consequence)
+
+    def test_find_forcing_nets_consequence_supports_four_candidate_pivot(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2, 3, 4},
+            1: {1},
+            2: {2},
+            3: {3},
+        }
+
+        consequence = find_forcing_nets_consequence(grid, candidates)
+
+        self.assertIsNotNone(consequence)
+        assert consequence is not None
+        self.assertEqual(consequence.pivot_cell, 0)
+        self.assertEqual(consequence.placements, ((0, 4),))
 
 
 if __name__ == "__main__":

@@ -531,7 +531,7 @@ Eliminate `3` from `r4c4`.
   placement/elimination is applied.
   Use on expert-level stalls after local chain/fish/ALS rules.
 - Forcing Nets (restricted):
-  Generalizes forcing-chain branching to pivots with two or three candidates.
+  Generalizes forcing-chain branching to pivots with two to four candidates.
   If all valid branches agree on a placement/elimination, or all but one
   branch contradict, the shared consequence is applied.
   Use late on expert stalls when shorter chain rules are exhausted.

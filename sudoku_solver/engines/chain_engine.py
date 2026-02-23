@@ -416,13 +416,13 @@ def find_forcing_nets_consequence(
     grid: Grid,
     candidates: dict[int, set[int]],
 ) -> ForcingConsequence | None:
-    """Find one forcing-net consequence from a 2/3-candidate pivot."""
+    """Find one forcing-net consequence from a 2-4 candidate pivot."""
     if not candidates:
         return None
 
     allowed = {cell_index: set(options) for cell_index, options in candidates.items()}
     pivot_cells = [
-        cell_index for cell_index in sorted(candidates) if 2 <= len(candidates[cell_index]) <= 3
+        cell_index for cell_index in sorted(candidates) if 2 <= len(candidates[cell_index]) <= 4
     ]
     for pivot_cell in pivot_cells:
         pivot_digits = sorted(candidates[pivot_cell])
@@ -501,6 +501,8 @@ def _propagate_assumption(
         branch_candidates = _state_candidates(cells, allowed_candidates)
         if branch_candidates is None:
             return _ForcingBranchResult(valid=False, cells=cells, candidates={})
+        if _has_unit_digit_contradiction(cells, branch_candidates):
+            return _ForcingBranchResult(valid=False, cells=cells, candidates={})
 
         forced = _forced_single_placements(cells, branch_candidates)
         if not forced:
@@ -545,6 +547,29 @@ def _state_candidates(
             return None
         normalized[cell_index] = options
     return normalized
+
+
+def _has_unit_digit_contradiction(
+    cells: list[int],
+    candidates: dict[int, set[int]],
+) -> bool:
+    for _, unit_cells in all_units():
+        placed = {
+            cells[cell_index]
+            for cell_index in unit_cells
+            if cells[cell_index] != 0
+        }
+        for digit in range(1, 10):
+            if digit in placed:
+                continue
+            if any(
+                cells[cell_index] == 0
+                and digit in candidates.get(cell_index, set())
+                for cell_index in unit_cells
+            ):
+                continue
+            return True
+    return False
 
 
 def _forced_single_placements(
