@@ -5,6 +5,7 @@ from sudoku_solver.engines.als_engine import (
     AlsElimination,
     DeathBlossomElimination,
     find_als,
+    find_als_chain_elimination,
     find_als_xz_elimination,
     find_death_blossom_elimination,
 )
@@ -57,6 +58,7 @@ __all__ = [
     "component_edge_count",
     "find_aic_elimination",
     "find_als",
+    "find_als_chain_elimination",
     "find_als_xz_elimination",
     "find_coloring_eliminations",
     "find_death_blossom_elimination",

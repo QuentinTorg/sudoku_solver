@@ -518,7 +518,8 @@ Eliminate `3` from `r4c4`.
   Use when shorter chains no longer progress.
 - ALS Chains (restricted):
   Links multiple almost-locked sets to propagate eliminations across units.
-  The current implementation extends safe ALS-XZ-style reductions.
+  The current implementation adds a restricted 3-ALS RCC-chain pass and
+  falls back to safe ALS-XZ-style reductions when no chain is found.
   Use in advanced ALS-rich states.
 - Forcing Chains (restricted):
   Branches on a bivalue pivot candidate and propagates forced singles.

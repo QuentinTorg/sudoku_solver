@@ -106,6 +106,91 @@ def find_als_xz_elimination(candidates: dict[int, set[int]]) -> AlsElimination |
     return None
 
 
+def find_als_chain_elimination(candidates: dict[int, set[int]]) -> AlsElimination | None:
+    """Find one restricted 3-ALS RCC-chain elimination."""
+    all_als = find_als(candidates)
+    if len(all_als) < 3:
+        return None
+
+    links: list[tuple[int, int, int]] = []
+    for first_index, first_als in enumerate(all_als):
+        for second_index in range(first_index + 1, len(all_als)):
+            second_als = all_als[second_index]
+            if set(first_als.cells) & set(second_als.cells):
+                continue
+            for digit in sorted(first_als.digits & second_als.digits):
+                if _restricted_link_exists(candidates, first_als, second_als, digit):
+                    links.append((first_index, second_index, digit))
+
+    if not links:
+        return None
+
+    for middle_index, middle_als in enumerate(all_als):
+        incoming = [
+            (first_index, digit)
+            for first_index, second_index, digit in links
+            if second_index == middle_index
+        ]
+        incoming.extend(
+            (second_index, digit)
+            for first_index, second_index, digit in links
+            if first_index == middle_index
+        )
+        if len(incoming) < 2:
+            continue
+
+        for first_neighbor, first_rcc in incoming:
+            first_als = all_als[first_neighbor]
+            for second_neighbor, second_rcc in incoming:
+                if second_neighbor == first_neighbor:
+                    continue
+                second_als = all_als[second_neighbor]
+                if set(first_als.cells) & set(second_als.cells):
+                    continue
+                if set(first_als.cells) & set(middle_als.cells):
+                    continue
+                if set(second_als.cells) & set(middle_als.cells):
+                    continue
+
+                target_digits = sorted((first_als.digits & second_als.digits) - {first_rcc, second_rcc})
+                for target_digit in target_digits:
+                    if target_digit in middle_als.digits:
+                        continue
+                    eliminations = _target_digit_eliminations(
+                        candidates,
+                        first_als,
+                        second_als,
+                        target_digit,
+                    )
+                    if not eliminations:
+                        continue
+                    return AlsElimination(
+                        restricted_digit=first_rcc,
+                        target_digit=target_digit,
+                        eliminations=tuple(sorted(eliminations)),
+                        affected_units=(
+                            first_als.unit_name,
+                            middle_als.unit_name,
+                            second_als.unit_name,
+                        ),
+                    )
+
+    return None
+
+
+def _restricted_link_exists(
+    candidates: dict[int, set[int]],
+    first_als: Als,
+    second_als: Als,
+    digit: int,
+) -> bool:
+    first_cells = [cell_index for cell_index in first_als.cells if digit in candidates[cell_index]]
+    second_cells = [cell_index for cell_index in second_als.cells if digit in candidates[cell_index]]
+    if len(first_cells) != 1 or len(second_cells) != 1:
+        return False
+    return second_cells[0] in peers(first_cells[0])
+
+
 def _target_digit_eliminations(
     candidates: dict[int, set[int]],
     first_als: Als,

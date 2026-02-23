@@ -2,6 +2,7 @@ import unittest
 
 from sudoku_solver.engines.als_engine import (
     find_als,
+    find_als_chain_elimination,
     find_als_xz_elimination,
     find_death_blossom_elimination,
 )
@@ -66,6 +67,38 @@ class AlsEngineTests(unittest.TestCase):
         self.assertEqual(elimination.second_petal, 49)
         self.assertEqual(elimination.target_digit, 9)
         self.assertEqual(elimination.eliminations, ((46, 9),))
+
+    def test_find_als_chain_elimination_returns_expected_batch(self) -> None:
+        candidates = {
+            0: {1, 4},
+            1: {2},
+            9: {1, 5},
+            10: {2, 5},
+            18: {3, 4},
+            19: {1, 3},
+            27: {4, 7},
+        }
+
+        elimination = find_als_chain_elimination(candidates)
+
+        self.assertIsNotNone(elimination)
+        assert elimination is not None
+        self.assertEqual(elimination.target_digit, 4)
+        self.assertEqual(elimination.eliminations, ((27, 4),))
+
+    def test_find_als_chain_elimination_returns_none_when_no_rcc_chain_exists(self) -> None:
+        candidates = {
+            0: {1, 4},
+            1: {2},
+            9: {1, 5},
+            10: {2, 5},
+            18: {3, 4},
+            19: {3, 6},
+            27: {4, 7},
+        }
+
+        elimination = find_als_chain_elimination(candidates)
+        self.assertIsNone(elimination)
 
 
 if __name__ == "__main__":
