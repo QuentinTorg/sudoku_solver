@@ -28,6 +28,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install .[dev]
 
+      - name: Verify Hypothesis
+        run: |
+          python -c "import hypothesis; print(f'hypothesis {hypothesis.__version__}')"
+
       - name: Ruff Format Check
         run: ruff format --check .
 
