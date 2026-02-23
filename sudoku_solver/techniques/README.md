@@ -10,6 +10,62 @@ Notation:
 - `{...}` means candidate digits for an unsolved cell.
 - Plain digits represent solved values.
 
+## Technique Index
+
+| Key | Name | Family | Tier | Status | Expected Cost |
+| --- | --- | --- | --- | --- | --- |
+| `naked_single` | Naked Single | Singles | Easy | Standard | Low |
+| `hidden_single` | Hidden Single | Singles | Easy | Standard | Low |
+| `locked_candidates` | Locked Candidates | Intersections | Easy | Standard | Low |
+| `naked_pair` | Naked Pair | Subsets | Medium | Standard | Low |
+| `hidden_pair` | Hidden Pair | Subsets | Medium | Standard | Low |
+| `naked_triple` | Naked Triple | Subsets | Medium | Standard | Medium |
+| `hidden_triple` | Hidden Triple | Subsets | Medium | Standard | Medium |
+| `naked_quad` | Naked Quad | Subsets | Hard | Standard | Medium |
+| `hidden_quad` | Hidden Quad | Subsets | Hard | Standard | Medium |
+| `xy_wing` | XY-Wing | Wings | Hard | Standard | Medium |
+| `xyz_wing` | XYZ-Wing | Wings | Hard | Standard | Medium |
+| `x_wing` | X-Wing | Fish | Hard | Standard | Medium |
+| `finned_x_wing` | Finned X-Wing | Fish | Expert | Standard | High |
+| `swordfish` | Swordfish | Fish | Hard | Standard | Medium |
+| `finned_swordfish` | Finned Swordfish | Fish | Expert | Standard | High |
+| `jellyfish` | Jellyfish | Fish | Expert | Standard | High |
+| `squirmbag` | Squirmbag | Fish | Expert | Standard | Very High |
+| `simple_coloring` | Simple Coloring | Coloring/Chains | Hard | Standard | Medium |
+| `three_d_medusa` | 3D Medusa | Coloring/Chains | Expert | Expanded | High |
+| `aic` | AIC | Coloring/Chains | Expert | Expanded | High |
+| `grouped_aic` | Grouped AIC | Coloring/Chains | Expert | Expanded | High |
+| `nice_loops` | Nice Loops | Coloring/Chains | Expert | Expanded | High |
+| `x_cycles` | X-Cycles | Coloring/Chains | Hard | Standard | Medium |
+| `xy_chain` | XY-Chain | Coloring/Chains | Hard | Standard | Medium |
+| `forcing_chains` | Forcing Chains | ALS/Forcing | Expert | Expanded | High |
+| `forcing_nets` | Forcing Nets | ALS/Forcing | Expert | Expanded | High |
+| `als_chains` | ALS Chains | ALS/Forcing | Expert | Expanded | High |
+| `death_blossom` | Death Blossom | ALS/Forcing | Expert | Restricted | High |
+| `uniqueness_expansions` | Uniqueness Expansions | Uniqueness | Expert | Restricted | Medium |
+| `fireworks` | Fireworks | Structures | Expert | Restricted | High |
+| `franken_mutant_fish` | Franken/Mutant Fish | Fish | Expert | Expanded | Very High |
+| `wxyz_wing` | WXYZ-Wing | Wings | Expert | Expanded | High |
+| `exocet` | Exocet | Structures | Expert | Restricted | Very High |
+| `sue_de_coq_full` | Sue de Coq Full/Generalized | Intersections | Expert | Restricted | High |
+| `kraken_fish` | Kraken Fish | Fish | Expert | Expanded | Very High |
+| `sashimi_fish` | Sashimi Fish | Fish | Expert | Expanded | High |
+| `als_xz` | ALS-XZ | ALS/Forcing | Expert | Expanded | High |
+| `sue_de_coq` | Sue de Coq | Intersections | Expert | Restricted | High |
+| `bug_plus_one` | BUG+1 | Uniqueness | Hard | Standard | Low |
+| `empty_rectangle` | Empty Rectangle | Intersections | Expert | Standard | Medium |
+| `remote_pairs` | Remote Pairs | Coloring/Chains | Hard | Standard | Medium |
+| `unique_rectangle` | Unique Rectangle | Uniqueness | Hard | Standard | Low |
+| `skyscraper` | Skyscraper | Structures | Hard | Standard | Medium |
+| `two_string_kite` | Two-String Kite | Structures | Hard | Standard | Medium |
+| `w_wing` | W-Wing | Wings | Hard | Standard | Medium |
+
+Status meaning:
+
+- `Standard`: implemented baseline rule for normal production use.
+- `Expanded`: implementation includes additional sub-pattern coverage compared to baseline.
+- `Restricted`: intentionally conservative subset of broader known variants.
+
 ## Singles and Subsets
 
 ### 1. Naked Single (`naked_single`)
