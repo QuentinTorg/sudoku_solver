@@ -33,6 +33,12 @@ class SolverInternalTests(unittest.TestCase):
         )
         self.assertEqual([tech.name for tech in ultra_expensive], ["franken_mutant_fish"])
 
+    def test_default_techniques_include_full_human_set(self) -> None:
+        resolved = _resolve_techniques(None)
+        resolved_names = {tech.name for tech in resolved}
+        expected_names = {technique.value for technique in TechniqueName}
+        self.assertEqual(resolved_names, expected_names)
+
     def test_find_contradiction_detects_missing_candidate_entry(self) -> None:
         cells = [0] + [1] * 80
         message = _find_contradiction(cells, {})

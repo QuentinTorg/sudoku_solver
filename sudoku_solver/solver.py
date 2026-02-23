@@ -367,29 +367,10 @@ def _resolve_techniques(
         "two_string_kite": apply_two_string_kite,
         "w_wing": apply_w_wing,
     }
-    default_order = [
-        "naked_single",
-        "hidden_single",
-        "locked_candidates",
-        "naked_pair",
-        "hidden_pair",
-        "naked_triple",
-        "hidden_triple",
-        "naked_quad",
-        "hidden_quad",
-        "xy_wing",
-        "xyz_wing",
-        "x_wing",
-        "w_wing",
-        "swordfish",
-        "jellyfish",
-        "bug_plus_one",
-        "simple_coloring",
-        "three_d_medusa",
-        "aic",
-        "x_cycles",
-        "xy_chain",
-    ]
+    # Default mode runs the full human-technique set in enum order.
+    # Execution cost is managed by the multi-pass scheduler that defers
+    # expensive rules.
+    default_order = [technique.value for technique in TechniqueName]
 
     selected = default_order if techniques is None else techniques
 

@@ -62,18 +62,13 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   43. Forcing Nets (restricted)
   44. Franken/Mutant Fish (restricted)
   45. Squirmbag
-- Default technique order:
-  Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
-  `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
-  `simple_coloring`, `three_d_medusa`, `aic`, `x_cycles`, and `xy_chain`
-  run by default.
-  More expensive techniques (`als_xz`, `sue_de_coq`, `grouped_aic`,
-  `nice_loops`, `als_chains`, `death_blossom`, `uniqueness_expansions`,
-  `fireworks`, `wxyz_wing`, `exocet`, `sue_de_coq_full`, `kraken_fish`,
-  `sashimi_fish`, `finned_x_wing`, `finned_swordfish`, `empty_rectangle`,
-  `squirmbag`, `remote_pairs`, `two_string_kite`, `skyscraper`, `unique_rectangle`,
-  `forcing_chains`, `forcing_nets`) are
-  available through API `techniques=[...]` selection.
+- Default technique set:
+  All implemented human techniques run by default.
+  Runtime is controlled by the three-pass scheduler (primary, deferred, and
+  ultra-expensive groups), so expensive techniques are not run first on every
+  iteration.
+  API `techniques=[...]` is still available when you want a custom subset or
+  custom order.
 - Advanced-technique safety:
   High-risk eliminations are conservatively validated against solution
   existence checks before they are applied, reducing false-positive
@@ -574,9 +569,8 @@ Eliminate `3` from `r4c4`.
   Use late on fish-heavy expert stalls.
 
 Performance note:
-The heaviest techniques are intentionally kept out of default order and are
-available via explicit API technique selection. Enabling all advanced
-techniques increases solve power but can be significantly slower.
+Default mode includes all implemented human techniques, including heavy
+late-game rules.
 Solver execution also uses a three-pass scheduler: non-deferred techniques run
 first, deferred expensive techniques run only after primary stalls, and
 ultra-expensive techniques (for example `franken_mutant_fish`) run only after
@@ -620,7 +614,7 @@ from sudoku_solver import solve_from_string
 puzzle = "53..7....6..195....98....6.8...6...34..8..6...2...1.6....28....419..5....8..79"
 result = solve_from_string(puzzle)
 fallback_result = solve_from_string(puzzle, allow_fallback_search=True)
-all_techniques_result = solve_from_string(
+custom_techniques_result = solve_from_string(
     puzzle,
     techniques=[
         "naked_single",
@@ -628,46 +622,6 @@ all_techniques_result = solve_from_string(
         "locked_candidates",
         "naked_pair",
         "hidden_pair",
-        "naked_triple",
-        "hidden_triple",
-        "naked_quad",
-        "hidden_quad",
-        "xy_wing",
-        "xyz_wing",
-        "x_wing",
-        "w_wing",
-        "swordfish",
-        "jellyfish",
-        "squirmbag",
-        "simple_coloring",
-        "three_d_medusa",
-        "aic",
-        "x_cycles",
-        "xy_chain",
-        "grouped_aic",
-        "nice_loops",
-        "als_chains",
-        "forcing_chains",
-        "forcing_nets",
-        "franken_mutant_fish",
-        "death_blossom",
-        "uniqueness_expansions",
-        "fireworks",
-        "wxyz_wing",
-        "exocet",
-        "sue_de_coq_full",
-        "kraken_fish",
-        "sashimi_fish",
-        "als_xz",
-        "sue_de_coq",
-        "bug_plus_one",
-        "finned_x_wing",
-        "finned_swordfish",
-        "empty_rectangle",
-        "remote_pairs",
-        "two_string_kite",
-        "skyscraper",
-        "unique_rectangle",
     ],
 )
 
@@ -700,8 +654,8 @@ python -m sudoku_solver --puzzle-file puzzles/top1465.txt --show-steps --show-te
 ```
 
 Note:
-CLI uses the default technique order. Custom technique subsets/supersets are currently
-configured through the Python API (`techniques=[...]`).
+CLI uses the full default human-technique set. Custom technique subsets/orders
+are configured through the Python API (`techniques=[...]`).
 
 ### Benchmark Harness
 
