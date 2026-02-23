@@ -27,6 +27,13 @@ from sudoku_solver.engines.fish_engine import (
     find_finned_x_wing_elimination,
     find_standard_fish_elimination,
 )
+from sudoku_solver.engines.uniqueness_engine import (
+    RectanglePairPattern,
+    UniquenessElimination,
+    find_unique_rectangle_type1_elimination,
+    find_uniqueness_expansion_elimination,
+    iter_rectangle_pair_patterns,
+)
 
 __all__ = [
     "AicElimination",
@@ -46,7 +53,12 @@ __all__ = [
     "find_aic_elimination",
     "find_coloring_eliminations",
     "find_death_blossom_elimination",
+    "find_uniqueness_expansion_elimination",
+    "find_unique_rectangle_type1_elimination",
     "find_standard_fish_elimination",
+    "iter_rectangle_pair_patterns",
+    "RectanglePairPattern",
+    "UniquenessElimination",
     "shared_single_candidate",
     "trap_eliminations",
     "wrap_eliminations",

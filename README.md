@@ -692,6 +692,7 @@ python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --p
 - `sudoku_solver/engines/chain_engine.py`: shared chain graph helpers (AIC/coloring/XY-chain support).
 - `sudoku_solver/engines/fish_engine.py`: shared fish scanners (X-Wing/Swordfish/Jellyfish/finned families).
 - `sudoku_solver/engines/als_engine.py`: shared ALS and petal-structure scans (ALS-XZ/ALS-Chains/Death Blossom).
+- `sudoku_solver/engines/uniqueness_engine.py`: shared rectangle/pair scans for uniqueness-family rules.
 - `sudoku_solver/techniques/`: individual technique implementations.
 - `sudoku_solver/solver.py`: orchestration loop, step application, optional fallback search, difficulty classification.
 - `sudoku_solver/cli.py`: CLI parser, single/file runners, progress and reporting output.
