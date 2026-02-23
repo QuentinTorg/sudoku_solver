@@ -38,6 +38,26 @@ class ExocetTechniqueTests(unittest.TestCase):
         step = apply_exocet(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_exocet_supports_column_oriented_pattern(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2},
+            9: {1, 2},  # base pair in column 1 box 1
+            1: {1, 2, 3},
+            10: {1, 2, 4},  # target column pair
+            2: {1, 5},
+            11: {2, 6},
+            3: {2, 7},
+            12: {1, 8},
+        }
+
+        step = apply_exocet(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "exocet")
+        self.assertEqual(step.eliminations, [(2, 1), (3, 2), (11, 2), (12, 1)])
+
 
 if __name__ == "__main__":
     unittest.main()

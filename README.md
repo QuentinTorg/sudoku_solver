@@ -54,7 +54,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   35. Uniqueness Expansions (restricted)
   36. Fireworks (restricted)
   37. WXYZ-Wing (restricted)
-  38. Exocet (very restricted)
+  38. Exocet (restricted)
   39. Sue de Coq Full/Generalized (restricted)
   40. Kraken Fish (restricted)
   41. Sashimi Fish (restricted)
@@ -552,9 +552,9 @@ Eliminate `3` from `r4c4`.
   Four-cell wing generalization of XYZ-Wing.
   A restricted shared candidate can be removed from cells seeing all holders.
   Use after XY/XYZ/chain techniques.
-- Exocet (very restricted):
+- Exocet (restricted):
   Structural base/target pattern that constrains two digits to target cells.
-  Current implementation detects a narrow junior-style aligned variant.
+  Current implementation detects restricted aligned row- and column-based variants.
   Use as a specialized late-game pattern.
 - Sue de Coq Full/Generalized (restricted):
   Generalizes Sue de Coq beyond the base intersection form.
