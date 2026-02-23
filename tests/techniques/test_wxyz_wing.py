@@ -35,6 +35,42 @@ class WxyzWingTechniqueTests(unittest.TestCase):
         step = apply_wxyz_wing(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_wxyz_wing_type1_supports_two_holder_non_restricted_digit(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {2, 3},
+            1: {2, 4},
+            4: {1, 4},
+            9: {1, 3},
+            13: {1, 8},
+        }
+
+        step = apply_wxyz_wing(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "wxyz_wing")
+        self.assertEqual(step.eliminations, [(13, 1)])
+        self.assertIn("type 1", step.rationale)
+
+    def test_apply_wxyz_wing_type2_eliminates_restricted_digit(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2},
+            1: {1, 3},
+            4: {2, 4},
+            9: {1, 3},
+            3: {2, 5, 6, 7, 8},
+        }
+
+        step = apply_wxyz_wing(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "wxyz_wing")
+        self.assertEqual(step.eliminations, [(3, 2)])
+        self.assertIn("type 2", step.rationale)
+
 
 if __name__ == "__main__":
     unittest.main()

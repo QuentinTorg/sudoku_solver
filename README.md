@@ -53,7 +53,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   34. Death Blossom (restricted)
   35. Uniqueness Expansions (restricted)
   36. Fireworks (restricted)
-  37. WXYZ-Wing (restricted)
+  37. WXYZ-Wing (expanded)
   38. Exocet (restricted)
   39. Sue de Coq Full/Generalized (restricted)
   40. Kraken Fish (restricted)
@@ -543,9 +543,9 @@ Eliminate `3` from `r4c4`.
   A pivot with row/column conjugate-style links can remove a remote candidate.
   Current implementation targets a narrow but safe single-digit form.
   Use on expert stalls with strong-link intersections.
-- WXYZ-Wing (restricted):
+- WXYZ-Wing (expanded):
   Four-cell wing generalization of XYZ-Wing.
-  A restricted shared candidate can be removed from cells seeing all holders.
+  Supports both type-1 and type-2 wing eliminations over two-unit wing layouts.
   Use after XY/XYZ/chain techniques.
 - Exocet (restricted):
   Structural base/target pattern that constrains two digits to target cells.
