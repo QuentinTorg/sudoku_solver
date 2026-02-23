@@ -116,7 +116,7 @@ def find_als_xz_elimination(candidates: dict[int, set[int]]) -> AlsElimination |
 
 
 def find_als_chain_elimination(candidates: dict[int, set[int]]) -> AlsElimination | None:
-    """Find one restricted 3-ALS RCC-chain elimination."""
+    """Find one restricted ALS RCC-chain elimination (3- or 4-ALS)."""
     all_als = find_als(candidates)
     if len(all_als) < 3:
         return None
@@ -184,7 +184,67 @@ def find_als_chain_elimination(candidates: dict[int, set[int]]) -> AlsEliminatio
                         ),
                     )
 
+    adjacency: dict[int, list[tuple[int, int]]] = {}
+    for first_index, second_index, digit in links:
+        adjacency.setdefault(first_index, []).append((second_index, digit))
+        adjacency.setdefault(second_index, []).append((first_index, digit))
+
+    for start_index, start_als in enumerate(all_als):
+        for first_mid_index, first_rcc in adjacency.get(start_index, []):
+            first_mid_als = all_als[first_mid_index]
+            if not _als_cells_disjoint(start_als, first_mid_als):
+                continue
+            for second_mid_index, second_rcc in adjacency.get(first_mid_index, []):
+                if second_mid_index in {start_index, first_mid_index}:
+                    continue
+                second_mid_als = all_als[second_mid_index]
+                if not _als_cells_disjoint(start_als, second_mid_als):
+                    continue
+                if not _als_cells_disjoint(first_mid_als, second_mid_als):
+                    continue
+                for end_index, third_rcc in adjacency.get(second_mid_index, []):
+                    if end_index in {start_index, first_mid_index, second_mid_index}:
+                        continue
+                    end_als = all_als[end_index]
+                    if not _als_cells_disjoint(start_als, end_als):
+                        continue
+                    if not _als_cells_disjoint(first_mid_als, end_als):
+                        continue
+                    if not _als_cells_disjoint(second_mid_als, end_als):
+                        continue
+
+                    target_digits = sorted(
+                        (start_als.digits & end_als.digits)
+                        - {first_rcc, second_rcc, third_rcc}
+                        - set(first_mid_als.digits)
+                        - set(second_mid_als.digits)
+                    )
+                    for target_digit in target_digits:
+                        eliminations = _target_digit_eliminations(
+                            candidates,
+                            start_als,
+                            end_als,
+                            target_digit,
+                        )
+                        if not eliminations:
+                            continue
+                        return AlsElimination(
+                            restricted_digit=first_rcc,
+                            target_digit=target_digit,
+                            eliminations=tuple(sorted(eliminations)),
+                            affected_units=(
+                                start_als.unit_name,
+                                first_mid_als.unit_name,
+                                second_mid_als.unit_name,
+                                end_als.unit_name,
+                            ),
+                        )
+
     return None
+
+
+def _als_cells_disjoint(first_als: Als, second_als: Als) -> bool:
+    return not (set(first_als.cells) & set(second_als.cells))
 
 
 def _restricted_link_exists(

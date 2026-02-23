@@ -55,6 +55,27 @@ class AlsChainsTechniqueTests(unittest.TestCase):
         step = apply_als_chains(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_als_chains_supports_four_als_path(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 4},
+            1: {2},
+            9: {1, 5},
+            10: {3},
+            18: {3, 6},
+            19: {5},
+            27: {6},
+            29: {2, 4},
+            2: {4, 7},
+        }
+
+        step = apply_als_chains(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "als_chains")
+        self.assertEqual(step.eliminations, [(2, 4)])
+
 
 if __name__ == "__main__":
     unittest.main()
