@@ -465,12 +465,16 @@ Eliminate `3` from `r4c4`.
   Use after Swordfish for harder fish-style stalls.
 - Empty Rectangle:
   A box-level L-shape candidate pattern combined with row/column links.
-  This creates a single crossing elimination for the same digit.
+  This creates eliminations on shared peer cells for the same digit.
   Use on advanced stalled states where direct fish/wing moves are unavailable.
 - Remote Pairs:
   A chain of bivalue cells using the same pair (for example `{1,9}`).
   Cells seeing opposite chain colors can eliminate both pair digits.
   Use on advanced chain-heavy puzzles after simpler pair/wing methods.
+- Two-String Kite:
+  One row strong link and one column strong link share a box endpoint.
+  The opposite endpoints then eliminate that digit from shared peer cells.
+  Use as a focused single-digit chain rule on stalled states.
 - Simple Coloring:
   A single digit is colored across strong links with two alternating colors.
   Color-wrap and color-trap conditions produce candidate eliminations.

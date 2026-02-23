@@ -36,6 +36,24 @@ class TwoStringKiteTechniqueTests(unittest.TestCase):
         step = apply_two_string_kite(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_two_string_kite_can_eliminate_from_multiple_shared_peers(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            1: {1, 5},
+            2: {2, 5},  # row strong link (r1c2, r1c3)
+            9: {3, 5},
+            18: {4, 5},  # column strong link (r2c1, r3c1)
+            10: {5, 7},
+            19: {5, 8},
+        }
+
+        step = apply_two_string_kite(grid, candidates)
+
+        self.assertIsNotNone(step)
+        assert step is not None
+        self.assertEqual(step.technique.value, "two_string_kite")
+        self.assertEqual(step.eliminations, [(10, 5), (19, 5)])
+
 
 if __name__ == "__main__":
     unittest.main()

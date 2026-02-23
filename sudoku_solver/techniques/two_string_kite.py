@@ -10,7 +10,7 @@ When used:
 
 from sudoku_solver.grid import format_grid
 from sudoku_solver.types import Grid, Step, TechniqueName
-from sudoku_solver.units import box_index, col_cells, col_index, row_cells, row_index
+from sudoku_solver.units import box_index, col_cells, peers, row_cells
 
 
 def apply_two_string_kite(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
@@ -56,16 +56,16 @@ def apply_two_string_kite(grid: Grid, candidates: dict[int, set[int]]) -> Step |
                         other_col_end = (
                             second_col_end if col_end == first_col_end else first_col_end
                         )
-                        target_row = row_index(other_col_end)
-                        target_col = col_index(other_row_end)
-                        target_cell = target_row * 9 + target_col
-                        eliminations = []
-                        if (
-                            target_cell not in {other_row_end, other_col_end, row_end, col_end}
-                            and target_cell in candidates
-                            and digit in candidates[target_cell]
-                        ):
-                            eliminations = [(target_cell, digit)]
+                        if other_row_end == other_col_end:
+                            continue
+
+                        eliminations = [
+                            (cell_index, digit)
+                            for cell_index in sorted(peers(other_row_end) & peers(other_col_end))
+                            if cell_index not in {row_end, col_end, other_row_end, other_col_end}
+                            and cell_index in candidates
+                            and digit in candidates[cell_index]
+                        ]
                         if eliminations:
                             return Step(
                                 technique=TechniqueName.TWO_STRING_KITE,
