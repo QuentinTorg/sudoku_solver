@@ -412,6 +412,76 @@ def find_forcing_chains_consequence(
     return None
 
 
+def find_forcing_nets_consequence(
+    grid: Grid,
+    candidates: dict[int, set[int]],
+) -> ForcingConsequence | None:
+    """Find one forcing-net consequence from a 2/3-candidate pivot."""
+    if not candidates:
+        return None
+
+    allowed = {cell_index: set(options) for cell_index, options in candidates.items()}
+    pivot_cells = [
+        cell_index for cell_index in sorted(candidates) if 2 <= len(candidates[cell_index]) <= 3
+    ]
+    for pivot_cell in pivot_cells:
+        pivot_digits = sorted(candidates[pivot_cell])
+        branch_results: dict[int, _ForcingBranchResult] = {}
+        for digit in pivot_digits:
+            branch_results[digit] = _propagate_assumption(
+                grid.cells,
+                allowed,
+                pivot_cell,
+                digit,
+            )
+
+        valid_digits = [digit for digit in pivot_digits if branch_results[digit].valid]
+        invalid_digits = [digit for digit in pivot_digits if not branch_results[digit].valid]
+        if not valid_digits:
+            continue
+
+        if len(valid_digits) == 1 and invalid_digits:
+            forced_digit = valid_digits[0]
+            return ForcingConsequence(
+                pivot_cell=pivot_cell,
+                placements=((pivot_cell, forced_digit),),
+                eliminations=(),
+                reason=(
+                    f"Forcing net branches {invalid_digits} at cell {pivot_cell} "
+                    "contradict; remaining digit is forced."
+                ),
+            )
+
+        valid_branches = [branch_results[digit] for digit in valid_digits]
+        common_placements = _common_placements_for_branches(grid.cells, valid_branches)
+        if common_placements:
+            return ForcingConsequence(
+                pivot_cell=pivot_cell,
+                placements=tuple(common_placements),
+                eliminations=(),
+                reason=(
+                    f"Forcing net branches from cell {pivot_cell} agree on placements."
+                ),
+            )
+
+        common_eliminations = _common_eliminations_for_branches(
+            candidates,
+            valid_branches,
+            pivot_cell=pivot_cell,
+        )
+        if common_eliminations:
+            return ForcingConsequence(
+                pivot_cell=pivot_cell,
+                placements=(),
+                eliminations=tuple(common_eliminations),
+                reason=(
+                    f"Forcing net branches from cell {pivot_cell} agree on eliminations."
+                ),
+            )
+
+    return None
+
+
 def _propagate_assumption(
     base_cells: tuple[int, ...],
     allowed_candidates: dict[int, set[int]],
@@ -524,6 +594,26 @@ def _common_branch_placements(
     return placements
 
 
+def _common_placements_for_branches(
+    base_cells: tuple[int, ...],
+    branches: list[_ForcingBranchResult],
+) -> list[tuple[int, int]]:
+    if len(branches) < 2:
+        return []
+
+    placements: list[tuple[int, int]] = []
+    for index, original in enumerate(base_cells):
+        if original != 0:
+            continue
+        branch_values = [branch.cells[index] for branch in branches]
+        if any(value == 0 for value in branch_values):
+            continue
+        if len(set(branch_values)) != 1:
+            continue
+        placements.append((index, branch_values[0]))
+    return placements
+
+
 def _common_branch_eliminations(
     base_candidates: dict[int, set[int]],
     first_candidates: dict[int, set[int]],
@@ -541,4 +631,23 @@ def _common_branch_eliminations(
             if digit in first_options or digit in second_options:
                 continue
             eliminations.append((cell_index, digit))
+    return eliminations
+
+
+def _common_eliminations_for_branches(
+    base_candidates: dict[int, set[int]],
+    branches: list[_ForcingBranchResult],
+    *,
+    pivot_cell: int,
+) -> list[tuple[int, int]]:
+    if len(branches) < 2:
+        return []
+
+    eliminations: list[tuple[int, int]] = []
+    for cell_index, options in base_candidates.items():
+        if cell_index == pivot_cell:
+            continue
+        for digit in sorted(options):
+            if all(digit not in branch.candidates.get(cell_index, set()) for branch in branches):
+                eliminations.append((cell_index, digit))
     return eliminations

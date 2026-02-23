@@ -58,8 +58,9 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   39. Sue de Coq Full/Generalized (restricted)
   40. Kraken Fish (restricted)
   41. Sashimi Fish (restricted)
-  42. Forcing Chains / Nets (restricted)
-  43. Franken/Mutant Fish (restricted)
+  42. Forcing Chains (restricted)
+  43. Forcing Nets (restricted)
+  44. Franken/Mutant Fish (restricted)
 - Default technique order:
   Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
   `naked_quad`, `hidden_quad`, `swordfish`, `jellyfish`, `bug_plus_one`,
@@ -70,7 +71,7 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   `fireworks`, `wxyz_wing`, `exocet`, `sue_de_coq_full`, `kraken_fish`,
   `sashimi_fish`, `finned_x_wing`, `finned_swordfish`, `empty_rectangle`,
   `remote_pairs`, `two_string_kite`, `skyscraper`, `unique_rectangle`,
-  `forcing_chains`) are
+  `forcing_chains`, `forcing_nets`) are
   available through API `techniques=[...]` selection.
 - Advanced-technique safety:
   High-risk eliminations are conservatively validated against solution
@@ -519,11 +520,16 @@ Eliminate `3` from `r4c4`.
   Links multiple almost-locked sets to propagate eliminations across units.
   The current implementation extends safe ALS-XZ-style reductions.
   Use in advanced ALS-rich states.
-- Forcing Chains / Nets (restricted):
+- Forcing Chains (restricted):
   Branches on a bivalue pivot candidate and propagates forced singles.
-  If one branch contradicts or all branches agree on a consequence, that
+  If one branch contradicts or both branches agree on a consequence, that
   placement/elimination is applied.
   Use on expert-level stalls after local chain/fish/ALS rules.
+- Forcing Nets (restricted):
+  Generalizes forcing-chain branching to pivots with two or three candidates.
+  If all valid branches agree on a placement/elimination, or all but one
+  branch contradict, the shared consequence is applied.
+  Use late on expert stalls when shorter chain rules are exhausted.
 - Death Blossom (restricted):
   A stem cell plus two petals can force a shared external candidate false.
   Useful when petal pairs tie different stem digits to the same outside value.
@@ -635,6 +641,7 @@ all_techniques_result = solve_from_string(
         "nice_loops",
         "als_chains",
         "forcing_chains",
+        "forcing_nets",
         "franken_mutant_fish",
         "death_blossom",
         "uniqueness_expansions",

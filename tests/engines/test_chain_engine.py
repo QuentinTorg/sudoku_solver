@@ -7,6 +7,7 @@ from sudoku_solver.engines.chain_engine import (
     find_aic_elimination,
     find_coloring_eliminations,
     find_forcing_chains_consequence,
+    find_forcing_nets_consequence,
     shared_single_candidate,
 )
 from sudoku_solver.grid import parse_grid
@@ -109,6 +110,47 @@ class ChainEngineTests(unittest.TestCase):
         }
 
         consequence = find_forcing_chains_consequence(grid, candidates)
+        self.assertIsNone(consequence)
+
+    def test_find_forcing_nets_consequence_forces_digit_from_tri_pivot(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2, 3},
+            1: {1},
+            2: {2},
+        }
+
+        consequence = find_forcing_nets_consequence(grid, candidates)
+
+        self.assertIsNotNone(consequence)
+        assert consequence is not None
+        self.assertEqual(consequence.pivot_cell, 0)
+        self.assertEqual(consequence.placements, ((0, 3),))
+        self.assertEqual(consequence.eliminations, ())
+
+    def test_find_forcing_nets_consequence_returns_common_placement(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2, 3},
+            10: {5},
+        }
+
+        consequence = find_forcing_nets_consequence(grid, candidates)
+
+        self.assertIsNotNone(consequence)
+        assert consequence is not None
+        self.assertEqual(consequence.pivot_cell, 0)
+        self.assertEqual(consequence.placements, ((10, 5),))
+        self.assertEqual(consequence.eliminations, ())
+
+    def test_find_forcing_nets_consequence_returns_none_without_forcing(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 2, 3},
+            9: {4, 5},
+        }
+
+        consequence = find_forcing_nets_consequence(grid, candidates)
         self.assertIsNone(consequence)
 
 

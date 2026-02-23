@@ -31,6 +31,7 @@ class TechniqueName(StrEnum):
     X_CYCLES = "x_cycles"
     XY_CHAIN = "xy_chain"
     FORCING_CHAINS = "forcing_chains"
+    FORCING_NETS = "forcing_nets"
     ALS_CHAINS = "als_chains"
     DEATH_BLOSSOM = "death_blossom"
     UNIQUENESS_EXPANSIONS = "uniqueness_expansions"

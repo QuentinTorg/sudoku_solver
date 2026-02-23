@@ -23,13 +23,13 @@ class SolverInternalTests(unittest.TestCase):
 
     def test_partition_techniques_defers_expensive_rules(self) -> None:
         resolved = _resolve_techniques(
-            ["franken_mutant_fish", "finned_x_wing", "naked_single", "aic"]
+            ["franken_mutant_fish", "finned_x_wing", "naked_single", "aic", "forcing_nets"]
         )
         primary, deferred, ultra_expensive = _partition_techniques(resolved)
         self.assertEqual([tech.name for tech in primary], ["naked_single"])
         self.assertEqual(
             [tech.name for tech in deferred],
-            ["finned_x_wing", "aic"],
+            ["finned_x_wing", "aic", "forcing_nets"],
         )
         self.assertEqual([tech.name for tech in ultra_expensive], ["franken_mutant_fish"])
 
