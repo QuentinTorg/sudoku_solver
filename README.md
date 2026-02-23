@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/QuentinTorg/sudoku_solver/ci.yml?branch=main&label=ci)](https://github.com/QuentinTorg/sudoku_solver/actions/workflows/ci.yml)
 [![Dataset Regression](https://img.shields.io/github/actions/workflow/status/QuentinTorg/sudoku_solver/dataset.yml?branch=main&label=dataset)](https://github.com/QuentinTorg/sudoku_solver/actions/workflows/dataset.yml)
-[![Coverage Gate](https://img.shields.io/badge/coverage-%E2%89%A599%25-brightgreen)](https://github.com/QuentinTorg/sudoku_solver/actions/workflows/ci.yml)
+[![Coverage Gate](https://img.shields.io/badge/coverage-%E2%89%A597%25-brightgreen)](https://github.com/QuentinTorg/sudoku_solver/actions/workflows/ci.yml)
 
 Explainable Sudoku solver in Python with human-style techniques, step-by-step reasoning, CLI and library APIs, benchmarking tools, and CI quality gates.
 
@@ -719,6 +719,7 @@ pre-commit run --all-files
 ### Local checks
 
 ```bash
+source venv/bin/activate
 ruff format --check .
 ruff check .
 mypy
@@ -727,6 +728,27 @@ python -m coverage run --branch --source=sudoku_solver -m unittest discover -s t
 python -m coverage report -m
 ```
 
+### Unit tests and coverage (quick run)
+
+```bash
+source venv/bin/activate
+python -m unittest discover -s tests -t . -v
+```
+
+```bash
+source venv/bin/activate
+python -m coverage erase
+python -m coverage run --branch --source=sudoku_solver -m unittest discover -s tests -t .
+python -m coverage report -m
+python -m coverage html
+```
+
+Notes:
+
+- Terminal summary is printed by `coverage report -m`.
+- HTML report is written to `htmlcov/index.html`.
+- CI enforces a minimum package coverage gate of 97%.
+
 ## CI
 
 - `CI` workflow (`.github/workflows/ci.yml`) runs on pull requests and pushes to `main`:
@@ -734,7 +756,7 @@ python -m coverage report -m
   - Ruff lint
   - Mypy type checking
   - Unit tests
-  - Branch coverage gate (minimum 99%)
+  - Branch coverage gate (minimum 97%)
 - `Dataset Regression` workflow (`.github/workflows/dataset.yml`) runs on pushes to `main` and manual dispatch:
   - Dataset regression on `puzzles/top95.txt` and `puzzles/top1465.txt`
   - Benchmark artifact generation
