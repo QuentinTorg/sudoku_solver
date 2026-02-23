@@ -8,6 +8,7 @@ When used:
     On advanced stalled grids after XY/XYZ-Wing level techniques.
 """
 
+from sudoku_solver.engines.chain_engine import bivalue_cells, shared_single_candidate
 from sudoku_solver.grid import format_grid
 from sudoku_solver.types import Grid, Step, TechniqueName
 from sudoku_solver.units import peers
@@ -20,20 +21,15 @@ def apply_xy_chain(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
     if not candidates:
         return None
 
-    bivalue_cells = [
-        cell_index for cell_index in sorted(candidates) if len(candidates[cell_index]) == 2
-    ]
-    for start in bivalue_cells:
+    for start in bivalue_cells(candidates):
         start_digits = candidates[start]
         for target_digit in sorted(start_digits):
             for next_cell in sorted(peers(start)):
                 if next_cell not in candidates or len(candidates[next_cell]) != 2:
                     continue
-                shared = candidates[start] & candidates[next_cell]
-                if len(shared) != 1:
-                    continue
-                first_link_digit = next(iter(shared))
-                if first_link_digit == target_digit:
+
+                first_link_digit = shared_single_candidate(candidates, start, next_cell)
+                if first_link_digit is None or first_link_digit == target_digit:
                     continue
 
                 step = _search_chain(
@@ -84,7 +80,7 @@ def _search_chain(
                 affected_units=[],
                 rationale=(
                     f"XY-Chain {path} links endpoint digit {target_digit} and "
-                    f"eliminates from common peers."
+                    "eliminates from common peers."
                 ),
                 grid_snapshot_after=format_grid(grid),
             )
@@ -98,12 +94,8 @@ def _search_chain(
         if next_cell not in candidates or len(candidates[next_cell]) != 2:
             continue
 
-        shared = current_options & candidates[next_cell]
-        if len(shared) != 1:
-            continue
-
-        link_digit = next(iter(shared))
-        if link_digit == previous_link_digit:
+        link_digit = shared_single_candidate(candidates, current, next_cell)
+        if link_digit is None or link_digit == previous_link_digit:
             continue
 
         step = _search_chain(

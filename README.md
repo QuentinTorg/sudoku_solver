@@ -688,6 +688,8 @@ python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --p
 - `sudoku_solver/grid.py`: parsing, formatting, and givens validation.
 - `sudoku_solver/candidates.py`: candidate generation for empty cells.
 - `sudoku_solver/units.py`: row/column/box helpers and peer calculation.
+- `sudoku_solver/engines/`: shared family engines that reduce duplicated scans.
+- `sudoku_solver/engines/chain_engine.py`: shared chain graph helpers (AIC/coloring/XY-chain support).
 - `sudoku_solver/techniques/`: individual technique implementations.
 - `sudoku_solver/solver.py`: orchestration loop, step application, optional fallback search, difficulty classification.
 - `sudoku_solver/cli.py`: CLI parser, single/file runners, progress and reporting output.
@@ -700,11 +702,12 @@ python scripts/benchmark.py puzzles/top1465.txt --limit 200 --top-slowest 10 --p
 
 1. Parse input (`parse_grid`) and validate puzzle consistency.
 2. Build candidate sets for empty cells (`get_candidates`).
-3. Iterate technique functions in fixed order and request one `Step` at a time.
-4. Apply step placements/eliminations (`_apply_step`) and update state.
-5. Repeat until solved or no technique can progress.
-6. If stalled by techniques and fallback is enabled, run uniqueness-aware fallback search.
-7. Return `SolveResult` with final status, steps, telemetry, difficulty, and fallback usage flag.
+3. Iterate technique adapters in fixed order and request one `Step` at a time.
+4. Technique adapters may delegate scanning to shared family engines.
+5. Apply step placements/eliminations (`_apply_step`) and update state.
+6. Repeat until solved or no technique can progress.
+7. If stalled by techniques and fallback is enabled, run uniqueness-aware fallback search.
+8. Return `SolveResult` with final status, steps, telemetry, difficulty, and fallback usage flag.
 
 ## Quality Checks
 
