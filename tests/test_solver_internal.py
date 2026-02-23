@@ -4,6 +4,7 @@ from unittest.mock import patch
 from sudoku_solver.grid import parse_grid
 from sudoku_solver.solver import (
     _apply_step,
+    _assignment_has_solution,
     _classify_difficulty,
     _find_contradiction,
     _find_unique_solution,
@@ -201,6 +202,22 @@ class SolverInternalTests(unittest.TestCase):
         steps = [Step(technique=TechniqueName.NAKED_SINGLE)]
         rating = _classify_difficulty(steps, used_fallback=True)
         self.assertEqual(rating, DifficultyRating.EXPERT)
+
+    def test_assignment_has_solution_returns_false_for_conflicting_value(self) -> None:
+        cells = [1] + [0] * 80
+        self.assertFalse(_assignment_has_solution(cells, 0, 2))
+
+    def test_solve_skips_high_risk_step_that_is_not_solution_safe(self) -> None:
+        unsafe_step = Step(
+            technique=TechniqueName.FINNED_X_WING,
+            placements=[],
+            eliminations=[(0, 1)],
+        )
+        with patch("sudoku_solver.solver.apply_finned_x_wing", return_value=unsafe_step):
+            result = solve(parse_grid("." * 81), techniques=["finned_x_wing"])
+        self.assertEqual(result.status, SolveStatus.STALLED)
+        self.assertEqual(len(result.steps), 0)
+        self.assertIn("Fallback search is disabled.", result.message)
 
 
 if __name__ == "__main__":

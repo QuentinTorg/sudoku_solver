@@ -35,12 +35,27 @@ def apply_unique_rectangle(grid: Grid, candidates: dict[int, set[int]]) -> Step 
             if len(common) < 2:
                 continue
 
+            box_counts: dict[int, int] = {}
+            for cell_index in corners:
+                box = ((cell_index // 9) // 3) * 3 + ((cell_index % 9) // 3)
+                box_counts[box] = box_counts.get(box, 0) + 1
+            # Type-1 unique rectangle logic is reliable when corners lie in two boxes.
+            if len(box_counts) != 2 or sorted(box_counts.values()) != [2, 2]:
+                continue
+
             for pair in combinations(sorted(common), 2):
                 pair_set = set(pair)
                 if not all(pair_set.issubset(options) for options in corner_sets):
                     continue
 
-                extras = [options - pair_set for options in corner_sets]
+                # Type-1 UR: exactly three corners are the pure pair, one has extras.
+                pure_pair_count = sum(1 for options in corner_sets if options == pair_set)
+                if pure_pair_count != 3:
+                    continue
+
+                extras = [
+                    options - pair_set if options != pair_set else set() for options in corner_sets
+                ]
                 extra_indices = [index for index, extra in enumerate(extras) if extra]
                 if len(extra_indices) != 1:
                     continue

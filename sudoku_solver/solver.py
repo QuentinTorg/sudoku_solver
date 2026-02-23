@@ -3,14 +3,22 @@
 from sudoku_solver.candidates import get_candidates
 from sudoku_solver.grid import format_grid, parse_grid
 from sudoku_solver.techniques import (
+    apply_empty_rectangle,
+    apply_finned_swordfish,
+    apply_finned_x_wing,
     apply_hidden_pair,
+    apply_hidden_quad,
     apply_hidden_single,
     apply_hidden_triple,
+    apply_jellyfish,
     apply_locked_candidates,
     apply_naked_pair,
+    apply_naked_quad,
     apply_naked_single,
     apply_naked_triple,
+    apply_remote_pairs,
     apply_skyscraper,
+    apply_swordfish,
     apply_two_string_kite,
     apply_unique_rectangle,
     apply_w_wing,
@@ -26,6 +34,19 @@ from sudoku_solver.types import (
     Step,
     TechniqueName,
 )
+
+_HIGH_RISK_TECHNIQUES = {
+    TechniqueName.XY_WING,
+    TechniqueName.XYZ_WING,
+    TechniqueName.W_WING,
+    TechniqueName.FINNED_X_WING,
+    TechniqueName.FINNED_SWORDFISH,
+    TechniqueName.EMPTY_RECTANGLE,
+    TechniqueName.REMOTE_PAIRS,
+    TechniqueName.TWO_STRING_KITE,
+    TechniqueName.SKYSCRAPER,
+    TechniqueName.UNIQUE_RECTANGLE,
+}
 
 
 def solve(
@@ -86,6 +107,11 @@ def solve(
         for technique in technique_order:
             step = technique(current_grid, candidates)
             if step is None:
+                continue
+
+            if step.technique in _HIGH_RISK_TECHNIQUES and not _step_preserves_solution(
+                cells, candidates, step
+            ):
                 continue
 
             changed, error = _apply_step(cells, candidates, step)
@@ -192,9 +218,17 @@ def _resolve_techniques(
         "hidden_pair": apply_hidden_pair,
         "naked_triple": apply_naked_triple,
         "hidden_triple": apply_hidden_triple,
+        "naked_quad": apply_naked_quad,
+        "hidden_quad": apply_hidden_quad,
         "xy_wing": apply_xy_wing,
         "xyz_wing": apply_xyz_wing,
         "x_wing": apply_x_wing,
+        "finned_x_wing": apply_finned_x_wing,
+        "swordfish": apply_swordfish,
+        "finned_swordfish": apply_finned_swordfish,
+        "jellyfish": apply_jellyfish,
+        "empty_rectangle": apply_empty_rectangle,
+        "remote_pairs": apply_remote_pairs,
         "unique_rectangle": apply_unique_rectangle,
         "skyscraper": apply_skyscraper,
         "two_string_kite": apply_two_string_kite,
@@ -208,10 +242,14 @@ def _resolve_techniques(
         apply_hidden_pair,
         apply_naked_triple,
         apply_hidden_triple,
+        apply_naked_quad,
+        apply_hidden_quad,
         apply_xy_wing,
         apply_xyz_wing,
         apply_x_wing,
         apply_w_wing,
+        apply_swordfish,
+        apply_jellyfish,
     )
 
     if techniques is None:
@@ -289,6 +327,17 @@ def _apply_step(
 
 
 def _find_unique_solution(cells: list[int]) -> tuple[tuple[int, ...] | None, int]:
+    return _find_unique_solution_limited(cells, max_solutions=2)
+
+
+def _find_unique_solution_limited(
+    cells: list[int],
+    *,
+    max_solutions: int,
+) -> tuple[tuple[int, ...] | None, int]:
+    if max_solutions <= 0:
+        msg = "max_solutions must be >= 1"
+        raise ValueError(msg)
     state = list(cells)
     rows = [set() for _ in range(9)]
     cols = [set() for _ in range(9)]
@@ -309,7 +358,7 @@ def _find_unique_solution(cells: list[int]) -> tuple[tuple[int, ...] | None, int
     solutions: list[tuple[int, ...]] = []
 
     def backtrack() -> None:
-        if len(solutions) >= 2:
+        if len(solutions) >= max_solutions:
             return
 
         best_index = -1
@@ -354,13 +403,62 @@ def _find_unique_solution(cells: list[int]) -> tuple[tuple[int, ...] | None, int
             cols[col].remove(digit)
             boxes[box].remove(digit)
 
-            if len(solutions) >= 2:
+            if len(solutions) >= max_solutions:
                 return
 
     backtrack()
     if len(solutions) == 1:
         return solutions[0], 1
     return None, len(solutions)
+
+
+def _step_preserves_solution(
+    cells: list[int],
+    candidates: dict[int, set[int]],
+    step: Step,
+) -> bool:
+    for cell_index, digit in step.placements:
+        if not _assignment_has_solution(cells, cell_index, digit):
+            return False
+
+    for cell_index, digit in step.eliminations:
+        if cells[cell_index] != 0:
+            continue
+        # Conservative guard: only eliminate a digit when that assignment
+        # cannot participate in any valid completion of the current grid.
+        if _assignment_has_solution(cells, cell_index, digit):
+            return False
+
+    test_cells = list(cells)
+    test_candidates = {cell_index: set(options) for cell_index, options in candidates.items()}
+
+    changed, error = _apply_step(test_cells, test_candidates, step)
+    if error is not None or not changed:
+        return False
+
+    test_grid = Grid(cells=tuple(test_cells))
+    normalized_candidates = _normalize_candidates(test_grid, test_candidates)
+    if _find_contradiction(test_cells, normalized_candidates) is not None:
+        return False
+    if 0 not in test_cells:
+        return True
+
+    _, solution_count = _find_unique_solution_limited(test_cells, max_solutions=1)
+    return solution_count > 0
+
+
+def _assignment_has_solution(cells: list[int], cell_index: int, digit: int) -> bool:
+    if not 0 <= cell_index < 81:
+        return False
+    if not 1 <= digit <= 9:
+        return False
+    if cells[cell_index] not in (0, digit):
+        return False
+
+    constrained = list(cells)
+    constrained[cell_index] = digit
+    _, solution_count = _find_unique_solution_limited(constrained, max_solutions=1)
+    return solution_count > 0
 
 
 def _count_techniques(steps: list[Step]) -> dict[TechniqueName, int]:
@@ -384,9 +482,20 @@ def _classify_difficulty(
     if TechniqueName.XYZ_WING in techniques_used:
         return DifficultyRating.EXPERT
     if (
+        TechniqueName.JELLYFISH in techniques_used
+        or TechniqueName.FINNED_SWORDFISH in techniques_used
+        or TechniqueName.FINNED_X_WING in techniques_used
+    ):
+        return DifficultyRating.EXPERT
+    if (
         TechniqueName.X_WING in techniques_used
         or TechniqueName.XY_WING in techniques_used
         or TechniqueName.W_WING in techniques_used
+        or TechniqueName.SWORDFISH in techniques_used
+        or TechniqueName.NAKED_QUAD in techniques_used
+        or TechniqueName.HIDDEN_QUAD in techniques_used
+        or TechniqueName.EMPTY_RECTANGLE in techniques_used
+        or TechniqueName.REMOTE_PAIRS in techniques_used
         or TechniqueName.TWO_STRING_KITE in techniques_used
         or TechniqueName.SKYSCRAPER in techniques_used
         or TechniqueName.UNIQUE_RECTANGLE in techniques_used

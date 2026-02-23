@@ -46,8 +46,19 @@ def apply_w_wing(grid: Grid, candidates: dict[int, set[int]]) -> Step | None:
         for link_digit in sorted(first_digits):
             other_digit = next(iter(first_digits - {link_digit}))
             for link_first, link_second, unit_name in strong_links.get(link_digit, []):
-                aligned = (link_first in peers(first) and link_second in peers(second)) or (
-                    link_second in peers(first) and link_first in peers(second)
+                first_sees_first = link_first in peers(first)
+                first_sees_second = link_second in peers(first)
+                second_sees_first = link_first in peers(second)
+                second_sees_second = link_second in peers(second)
+
+                # A robust W-Wing bridge needs each wing to see exactly one endpoint,
+                # and the endpoints must be opposite (cross-linked).
+                if first_sees_first == first_sees_second:
+                    continue
+                if second_sees_first == second_sees_second:
+                    continue
+                aligned = (first_sees_first and second_sees_second) or (
+                    first_sees_second and second_sees_first
                 )
                 if not aligned:
                     continue

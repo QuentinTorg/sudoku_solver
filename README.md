@@ -27,14 +27,28 @@ Explainable Sudoku solver in Python with human-style techniques, step-by-step re
   8. XY-Wing
   9. XYZ-Wing
   10. X-Wing
-  11. W-Wing
-  12. Two-String Kite
-  13. Skyscraper
-  14. Unique Rectangle
+  11. Naked Quad
+  12. Hidden Quad
+  13. W-Wing
+  14. Swordfish
+  15. Jellyfish
+  16. Finned X-Wing / Sashimi X-Wing
+  17. Finned Swordfish
+  18. Empty Rectangle
+  19. Remote Pairs
+  20. Two-String Kite
+  21. Skyscraper
+  22. Unique Rectangle
 - Default technique order:
-  Core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, and `w_wing` run by default.
-  `two_string_kite`, `skyscraper`, and `unique_rectangle` are implemented and can be
-  enabled through the API `techniques=[...]` list.
+  Fast/core techniques plus `xy_wing`, `xyz_wing`, `x_wing`, `w_wing`,
+  `naked_quad`, `hidden_quad`, `swordfish`, and `jellyfish` run by default.
+  More expensive techniques (`finned_x_wing`, `finned_swordfish`,
+  `empty_rectangle`, `remote_pairs`, `two_string_kite`, `skyscraper`,
+  `unique_rectangle`) are available through API `techniques=[...]` selection.
+- Advanced-technique safety:
+  High-risk eliminations are conservatively validated against solution
+  existence checks before they are applied, reducing false-positive
+  eliminations that can otherwise produce invalid states.
 - Fallback search:
   Uniqueness-aware backtracking is available when no configured technique can advance the grid.
   It is disabled by default; use `allow_fallback_search=True` (API) or
@@ -395,6 +409,46 @@ Three corners are pure `{1,2}`; the fourth corner has extra candidate `3`.
 Action:
 Eliminate `3` from `r4c4`.
 
+### Additional Implemented Human Techniques
+
+- Naked Quad:
+  Four cells in one unit contain exactly four total digits between them.
+  Those four digits are removed from all other cells in that unit.
+  Use after triples when local candidate cleanup is still possible.
+- Hidden Quad:
+  Four digits in one unit can only appear in the same four cells.
+  Those cells are then reduced to only those four digits.
+  Use when unit scans show repeated multi-digit clutter that pair/triple rules miss.
+- Swordfish:
+  One digit forms a 3-row/3-column fish pattern (row-based or column-based).
+  That digit is eliminated from matching columns/rows outside the fish rows/columns.
+  Use after X-Wing for harder single-digit line interactions.
+- Jellyfish:
+  A larger 4-row/4-column fish version of Swordfish.
+  It enables similar eliminations but has a higher scan cost.
+  Use late in the pipeline on harder stalls.
+- Finned X-Wing / Sashimi X-Wing:
+  A near X-Wing where one extra "fin" candidate prevents a pure rectangle.
+  Eliminations are limited to cells in the fin's box that also align with base lines.
+  Use after standard X-Wing when almost-rectangular patterns appear.
+- Finned Swordfish:
+  A near Swordfish with one extra fin candidate.
+  The fin's box plus base lines determines safe eliminations.
+  Use after Swordfish for harder fish-style stalls.
+- Empty Rectangle:
+  A box-level L-shape candidate pattern combined with row/column links.
+  This creates a single crossing elimination for the same digit.
+  Use on advanced stalled states where direct fish/wing moves are unavailable.
+- Remote Pairs:
+  A chain of bivalue cells using the same pair (for example `{1,9}`).
+  Cells seeing opposite chain colors can eliminate both pair digits.
+  Use on advanced chain-heavy puzzles after simpler pair/wing methods.
+
+Performance note:
+The heaviest techniques are intentionally kept out of default order and are
+available via explicit API technique selection. Enabling all advanced
+techniques increases solve power but can be significantly slower.
+
 ## Result Model
 
 `solve_from_string()` returns a `SolveResult` with:
@@ -443,10 +497,18 @@ all_techniques_result = solve_from_string(
         "hidden_pair",
         "naked_triple",
         "hidden_triple",
+        "naked_quad",
+        "hidden_quad",
         "xy_wing",
         "xyz_wing",
         "x_wing",
         "w_wing",
+        "swordfish",
+        "jellyfish",
+        "finned_x_wing",
+        "finned_swordfish",
+        "empty_rectangle",
+        "remote_pairs",
         "two_string_kite",
         "skyscraper",
         "unique_rectangle",

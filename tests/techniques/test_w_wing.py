@@ -37,6 +37,19 @@ class WWingTechniqueTests(unittest.TestCase):
         step = apply_w_wing(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_w_wing_returns_none_when_wing_sees_both_link_endpoints(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            0: {1, 9},  # wing A
+            12: {1, 9},  # wing B (non-peer with wing A)
+            1: {1, 2},  # strong-link endpoint 1 (col 2)
+            10: {1, 3},  # strong-link endpoint 2 (col 2)
+            3: {4, 9},  # common peer candidate
+        }
+
+        step = apply_w_wing(grid, candidates)
+        self.assertIsNone(step)
+
 
 if __name__ == "__main__":
     unittest.main()

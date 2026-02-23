@@ -34,6 +34,18 @@ class XyWingTechniqueTests(unittest.TestCase):
         step = apply_xy_wing(grid, candidates)
         self.assertIsNone(step)
 
+    def test_apply_xy_wing_returns_none_when_pincers_see_each_other(self) -> None:
+        grid = parse_grid("." * 81)
+        candidates = {
+            40: {1, 2},  # pivot
+            37: {1, 3},  # pincer A
+            39: {2, 3},  # pincer B (peer with pincer A)
+            38: {3, 4},
+        }
+
+        step = apply_xy_wing(grid, candidates)
+        self.assertIsNone(step)
+
 
 if __name__ == "__main__":
     unittest.main()
