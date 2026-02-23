@@ -34,6 +34,8 @@ from sudoku_solver.engines.fish_engine import (
 from sudoku_solver.engines.uniqueness_engine import (
     RectanglePairPattern,
     UniquenessElimination,
+    find_uniqueness_type2_elimination,
+    find_uniqueness_type4_elimination,
     find_unique_rectangle_type1_elimination,
     find_uniqueness_expansion_elimination,
     iter_rectangle_pair_patterns,
@@ -66,6 +68,8 @@ __all__ = [
     "find_standard_fish_elimination",
     "find_unique_rectangle_type1_elimination",
     "find_uniqueness_expansion_elimination",
+    "find_uniqueness_type2_elimination",
+    "find_uniqueness_type4_elimination",
     "iter_rectangle_pair_patterns",
     "shared_single_candidate",
     "trap_eliminations",

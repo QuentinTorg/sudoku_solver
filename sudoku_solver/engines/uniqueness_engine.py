@@ -114,6 +114,17 @@ def find_unique_rectangle_type1_elimination(
 def find_uniqueness_expansion_elimination(
     candidates: dict[int, set[int]],
 ) -> UniquenessElimination | None:
+    """Find one restricted advanced-uniqueness elimination."""
+    type4 = find_uniqueness_type4_elimination(candidates)
+    if type4 is not None:
+        return type4
+
+    return find_uniqueness_type2_elimination(candidates)
+
+
+def find_uniqueness_type2_elimination(
+    candidates: dict[int, set[int]],
+) -> UniquenessElimination | None:
     """Find one restricted UR type-2 style elimination."""
     for pattern in iter_rectangle_pair_patterns(candidates):
         pair_set = set(pattern.pair_digits)
@@ -149,5 +160,64 @@ def find_uniqueness_expansion_elimination(
             cols=pattern.cols,
             eliminations=eliminations,
         )
+
+    return None
+
+
+def find_uniqueness_type4_elimination(
+    candidates: dict[int, set[int]],
+) -> UniquenessElimination | None:
+    """Find one restricted UR type-4 style elimination."""
+    for pattern in iter_rectangle_pair_patterns(candidates):
+        pair_set = set(pattern.pair_digits)
+        extras = [set(options) - pair_set for options in pattern.corner_sets]
+        roof_indices = [index for index, extra in enumerate(extras) if extra]
+        if len(roof_indices) != 2:
+            continue
+        floor_indices = [index for index in range(4) if index not in roof_indices]
+        if any(set(pattern.corner_sets[index]) != pair_set for index in floor_indices):
+            continue
+
+        first_roof = pattern.corners[roof_indices[0]]
+        second_roof = pattern.corners[roof_indices[1]]
+        first_row = first_roof // 9
+        second_row = second_roof // 9
+        first_col = first_roof % 9
+        second_col = second_roof % 9
+
+        shared_unit_cells: tuple[int, ...] | None = None
+        if first_row == second_row:
+            shared_unit_cells = tuple(first_row * 9 + col for col in range(9))
+        elif first_col == second_col:
+            shared_unit_cells = tuple(row * 9 + first_col for row in range(9))
+        if shared_unit_cells is None:
+            continue
+
+        roof_set = {first_roof, second_roof}
+        for locked_digit in pattern.pair_digits:
+            positions = {
+                cell_index
+                for cell_index in shared_unit_cells
+                if cell_index in candidates and locked_digit in candidates[cell_index]
+            }
+            if positions != roof_set:
+                continue
+
+            target_digit = pattern.pair_digits[0]
+            if target_digit == locked_digit:
+                target_digit = pattern.pair_digits[1]
+            eliminations = tuple(
+                (cell_index, target_digit)
+                for cell_index in sorted(roof_set)
+                if target_digit in candidates.get(cell_index, set())
+            )
+            if not eliminations:
+                continue
+            return UniquenessElimination(
+                kind="ur_type4_restricted",
+                rows=pattern.rows,
+                cols=pattern.cols,
+                eliminations=eliminations,
+            )
 
     return None

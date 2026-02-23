@@ -1,8 +1,8 @@
-"""Uniqueness expansions (restricted UR type-2 style).
+"""Uniqueness expansions (restricted UR type-2/type-4 styles).
 
 Meaning:
     Additional uniqueness patterns beyond base unique rectangle. This restricted
-    version targets an UR type-2 style elimination.
+    version targets UR type-2 and UR type-4 style eliminations.
 
 When used:
     On harder stalled states to avoid non-unique deadly patterns.
@@ -22,15 +22,15 @@ def apply_uniqueness_expansions(grid: Grid, candidates: dict[int, set[int]]) -> 
     if elimination is None:
         return None
 
-    extra_digit = elimination.eliminations[0][1]
+    target_digit = elimination.eliminations[0][1]
     return Step(
         technique=TechniqueName.UNIQUENESS_EXPANSIONS,
         placements=[],
         eliminations=list(elimination.eliminations),
         affected_units=[],
         rationale=(
-            "Uniqueness expansion (restricted UR type-2) "
-            f"eliminates extra digit {extra_digit}."
+            f"Uniqueness expansion ({elimination.kind}) "
+            f"eliminates digit {target_digit}."
         ),
         grid_snapshot_after=format_grid(grid),
     )
